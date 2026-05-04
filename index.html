@@ -470,7 +470,8 @@
     } catch (e) {
       setLoading("btn-login", false, "Sign In");
       hideLoader();
-      showMsg("msg-login", friendlyError(e.code), "error");
+      console.error("Login error:", e.code, e.message);
+      showMsg("msg-login", friendlyError(e.code) + " (Code: " + e.code + ")", "error");
     }
   }
 
