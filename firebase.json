@@ -8,7 +8,8 @@
       "**/tests/**",
       "package.json",
       "package-lock.json",
-      "push.bat"
+      "push.bat",
+      "404.html"
     ],
     "rewrites": [
       {
