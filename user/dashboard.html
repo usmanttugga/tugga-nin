@@ -2896,41 +2896,109 @@
     const btn = document.getElementById('btnGenerateVA');
     const alertEl = document.getElementById('vaGenAlert');
     btn.disabled = true;
-    btn.textContent = 'Requesting...';
+    btn.textContent = 'Creating...';
     alertEl.innerHTML = '';
 
     if (!window.fbReady) {
       alertEl.innerHTML = '<div class="alert alert-error">Firebase not ready. Please try again.</div>';
       btn.disabled = false;
-      btn.textContent = '🏦 Generate My Virtual Account';
+      btn.textContent = '🏦 Request Virtual Account';
       return;
     }
 
-    // Save a VA request to Firestore — admin will create it via Paystack dashboard and assign back
-    window.fbSetDoc(window.fbDoc(window.fbDB, 'va_requests', user.uid || user.id), {
-      userId: user.uid || user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-      requestedAt: new Date().toISOString(),
-      status: 'pending'
-    }).then(function() {
-      alertEl.innerHTML = '<div class="alert alert-success">✅ Request submitted! Your dedicated account will be assigned within 24 hours. You will see it here once ready.</div>';
-      btn.textContent = '⏳ Request Submitted';
-    }).catch(function(e) {
-      alertEl.innerHTML = '<div class="alert alert-error">Failed to submit request: ' + e.message + '</div>';
-      btn.disabled = false;
-      btn.textContent = '🏦 Generate My Virtual Account';
+    // Check if user already has a DVA
+    window.fbGetDoc(window.fbDoc(window.fbDB, 'users', user.uid || user.id)).then(function(snap) {
+      if (snap.exists() && snap.data().virtualAccount) {
+        const va = snap.data().virtualAccount;
+        showVirtualAccountCard(va);
+        btn.textContent = '✅ Account Ready';
+        return;
+      }
+      // Create Paystack DVA via API
+      createPaystackDVA();
+    }).catch(function() {
+      createPaystackDVA();
     });
+  }
+
+  function createPaystackDVA() {
+    const btn = document.getElementById('btnGenerateVA');
+    const alertEl = document.getElementById('vaGenAlert');
+    const uid = user.uid || user.id;
+
+    // First create a Paystack customer
+    fetch('https://api.paystack.co/customer', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: user.email,
+        first_name: (user.name || '').split(' ')[0] || 'User',
+        last_name: (user.name || '').split(' ').slice(1).join(' ') || 'Account',
+        phone: user.phone || ''
+      })
+    })
+    .then(r => r.json())
+    .then(function(customerRes) {
+      if (!customerRes.status) throw new Error(customerRes.message || 'Failed to create customer');
+      const customerCode = customerRes.data.customer_code;
+      // Now create dedicated virtual account
+      return fetch('https://api.paystack.co/dedicated_account', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customer: customerCode,
+          preferred_bank: 'wema-bank'
+        })
+      }).then(r => r.json());
+    })
+    .then(function(dvaRes) {
+      if (!dvaRes.status) throw new Error(dvaRes.message || 'Failed to create virtual account');
+      const va = {
+        bank: dvaRes.data.bank.name,
+        account_number: dvaRes.data.account_number,
+        account_name: dvaRes.data.account_name,
+        customer_code: dvaRes.data.customer.customer_code
+      };
+      // Save to Firestore
+      return window.fbUpdateDoc(window.fbDoc(window.fbDB, 'users', uid), { virtualAccount: va })
+        .then(function() { return va; });
+    })
+    .then(function(va) {
+      showVirtualAccountCard(va);
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Your dedicated account has been created!</div>';
+      btn.textContent = '✅ Account Ready';
+    })
+    .catch(function(e) {
+      alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '. Please contact support.</div>';
+      btn.disabled = false;
+      btn.textContent = '🏦 Request Virtual Account';
+    });
+  }
+
+  function showVirtualAccountCard(va) {
+    const content = document.getElementById('walletVAContent');
+    const details = document.getElementById('walletVADetails');
+    if (content) content.style.display = 'none';
+    if (details) {
+      details.style.display = 'flex';
+      document.getElementById('walletVABank').textContent   = va.bank || '—';
+      document.getElementById('walletVANumber').textContent = va.account_number || '—';
+      document.getElementById('walletVAName').textContent   = va.account_name || user.name;
+    }
   }
 
   function loadVirtualAccount() {
     const vaDetails = document.getElementById('vaDetails');
     const vaLoading = document.getElementById('vaLoading');
     const vaError   = document.getElementById('vaError');
-    // Check if user already has a virtual account in Firestore
     if (!window.fbReady) { vaLoading.textContent = 'Loading...'; return; }
-    window.fbGetDoc(window.fbDoc(window.fbDB, 'users', user.uid)).then(function(snap) {
+    window.fbGetDoc(window.fbDoc(window.fbDB, 'users', user.uid || user.id)).then(function(snap) {
       if (snap.exists() && snap.data().virtualAccount) {
         const va = snap.data().virtualAccount;
         document.getElementById('vaBank').textContent   = va.bank || 'Wema Bank';
@@ -2938,11 +3006,12 @@
         document.getElementById('vaName').textContent   = va.account_name || user.name;
         vaLoading.style.display = 'none';
         vaDetails.style.display = 'block';
+        // Also update the wallet card VA display
+        showVirtualAccountCard(va);
       } else {
-        // No virtual account yet — show instructions to contact admin or use card
         vaLoading.style.display = 'none';
         vaError.style.display = 'block';
-        vaError.textContent = 'No virtual account assigned yet. Please use Card payment or contact support to get your dedicated account.';
+        vaError.textContent = 'No virtual account yet. Click "Request Virtual Account" to get one instantly.';
       }
     }).catch(function() {
       vaLoading.textContent = 'Could not load account details.';
@@ -2959,7 +3028,7 @@
       return;
     }
     const handler = PaystackPop.setup({
-      key: 'pk_test_f16b0a1046100539abcb9c9d80395ce61aa08583',
+      key: 'pk_live_ff5adc037d857a85d80e874f8cb69b60eb59f2fb',
       email: user.email,
       amount: amt * 100, // Paystack uses kobo
       currency: 'NGN',
@@ -2968,7 +3037,7 @@
       callback: function(response) {
         // Payment successful — credit wallet
         walletBalance += amt;
-        addTransaction(user.id, 'Wallet Funding', 'Paystack Ref: ' + response.reference, amt);
+        addTransaction(user.id || user.uid, 'Wallet Funding', 'Paystack Ref: ' + response.reference, amt);
         syncWalletToFirebase();
         closeModal('fundModal');
         toast('Wallet funded with ' + fmt(amt) + ' via Paystack!');
