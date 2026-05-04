@@ -1162,7 +1162,7 @@
 <script type="module" src="../js/firebase.js"></script>
 <script>
   const user = requireAuth("user");
-  let walletBalance = user ? user.wallet : 0;
+  let walletBalance = user ? (parseFloat(user.wallet) || 0) : 0;
   let currentService = {};
 
   if (user) {

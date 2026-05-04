@@ -102,7 +102,7 @@ function openAdminProfile() {
 }
 
 // ── Format Currency ───────────────────────────────────
-function fmt(n) { return "\u20A6" + Number(n).toLocaleString(); }
+function fmt(n) { const v = parseFloat(n) || 0; return "\u20A6" + v.toLocaleString(); }
 
 // ── Toast ─────────────────────────────────────────────
 function toast(msg, type = "success") {
