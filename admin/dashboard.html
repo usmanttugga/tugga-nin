@@ -591,6 +591,17 @@
     { id: 1, name: "John Doe", email: "user@tugga.com", role: "user", wallet: 5000, status: "Active" }
   ];
 
+  // Resolve UID to email for display
+  function resolveUser(userId) {
+    if (!userId) return '—';
+    // If it already looks like an email, return as-is
+    if (userId.includes('@')) return userId;
+    // Look up in _fbUsers by uid or id
+    const users = window._fbUsers || [];
+    const u = users.find(x => (x.uid || x.id) === userId);
+    return u ? u.email : userId;
+  }
+
   function loadOverview() {
     const txns = JSON.parse(localStorage.getItem("tugga_txns") || "[]");
     const fundingTxns = txns.filter(t => t.service === 'Wallet Funding');
@@ -609,7 +620,7 @@
     tbody.innerHTML = txns.slice(0, 10).map(t => {
       const badgeClass = t.status === 'success' ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
       const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
-      return `<tr><td>${t.id}</td><td>${t.userId}</td><td>${t.service}</td>
+      return `<tr><td>${t.id}</td><td>${resolveUser(t.userId)}</td><td>${t.service}</td>
       <td>${fmt(t.amount)}</td>
       <td><span class="badge badge-${badgeClass}">${displayStatus}</span></td>
       <td>${t.date}</td></tr>`;
@@ -749,7 +760,7 @@
       const viewBtn = `<button onclick="openRequestDetails('${t.id}')" style="background:var(--accent);color:var(--primary);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">👁 View</button>`;
       return `<tr>
         <td style="font-size:0.75rem">${t.id}</td>
-        <td style="font-size:0.75rem">${t.userId}</td>
+        <td style="font-size:0.75rem">${resolveUser(t.userId)}</td>
         <td style="font-size:0.82rem">${t.service}</td>
         <td style="font-size:0.82rem">${t.details}</td>
         <td>${fmt(t.amount)}</td>
@@ -859,7 +870,7 @@
             : t.status === 'failed' ? `<span style="color:#e53e3e;font-size:0.75rem;font-weight:600;display:block;margin-top:2px">❌ Failed</span>` : '';
       return `<tr>
         <td style="font-size:0.75rem;max-width:80px;overflow:hidden;text-overflow:ellipsis">${t.id}</td>
-        <td style="font-size:0.75rem">${t.userId || '—'}</td>
+        <td style="font-size:0.75rem">${resolveUser(t.userId || '—')}</td>
         <td><strong style="font-size:0.82rem">${t.service}</strong></td>
         <td style="font-size:0.82rem;max-width:120px;overflow:hidden;text-overflow:ellipsis">${t.details || '—'}</td>
         <td>${fmt(t.amount)}</td>
@@ -1141,7 +1152,7 @@
     const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status;
     document.getElementById('rdMeta').innerHTML =
       `<span>Ref: <strong>${t.id}</strong></span>` +
-      `<span>User: <strong>${t.userId || '—'}</strong></span>` +
+      `<span>User: <strong>${resolveUser(t.userId) || '—'}</strong></span>` +
       `<span>Date: <strong>${t.date}</strong></span>` +
       `<span>Amount: <strong>${fmt(t.amount)}</strong></span>` +
       `<span>Status: <span class="badge badge-${badgeClass}">${displayStatus}</span></span>`;
