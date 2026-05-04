@@ -1203,8 +1203,8 @@
     });
 
     // User wallet real-time + suspension check
-    if (user && user.uid) {
-      window.fbOnSnapshot(window.fbDoc(window.fbDB, "users", user.uid), function(snap) {
+    if (user && (user.uid || user.id)) {
+      window.fbOnSnapshot(window.fbDoc(window.fbDB, "users", user.uid || user.id), function(snap) {
         if (snap.exists()) {
           const data = snap.data();
           // If admin suspended this user, log them out immediately
@@ -1338,8 +1338,9 @@
 
   // Save wallet to Firebase when deducted
   function syncWalletToFirebase() {
-    if (window.fbReady && user && user.uid) {
-      window.fbUpdateDoc(window.fbDoc(window.fbDB, "users", user.uid), { wallet: walletBalance })
+    const uid = user.uid || user.id;
+    if (window.fbReady && uid) {
+      window.fbUpdateDoc(window.fbDoc(window.fbDB, "users", uid), { wallet: walletBalance })
         .catch(e => console.error("Wallet sync error:", e));
     }
   }
