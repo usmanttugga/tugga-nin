@@ -105,20 +105,7 @@
         <button class="btn-fund" onclick="openModal('fundModal')">+ Fund Wallet</button>
       </div>
 
-      <!-- Virtual Account Card -->
-      <div id="walletVACard" style="background:var(--white);border-radius:10px;padding:0.8rem 1rem;margin-bottom:1rem;box-shadow:var(--card-shadow);border:1px solid #d1fae5;max-width:480px">
-        <p style="font-weight:700;color:var(--primary);margin-bottom:0.5rem;font-size:0.82rem">🏦 Dedicated Bank Account</p>
-        <div id="walletVAContent">
-          <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.6rem">Get a dedicated account to fund your wallet via bank transfer.</p>
-          <button onclick="generateVirtualAccount()" id="btnGenerateVA" style="background:var(--primary);color:#fff;border:none;padding:7px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem">🏦 Request Virtual Account</button>
-          <div id="vaGenAlert" style="margin-top:0.6rem"></div>
-        </div>
-        <div id="walletVADetails" style="display:none;flex-direction:column;gap:0.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0;border-bottom:1px solid #d1fae5"><span style="color:var(--gray);font-size:0.75rem">Bank</span><strong id="walletVABank" style="font-size:0.78rem"></strong></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0;border-bottom:1px solid #d1fae5"><span style="color:var(--gray);font-size:0.75rem">Account No.</span><strong id="walletVANumber" style="font-size:0.82rem;letter-spacing:1px;color:var(--primary)"></strong></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:0.25rem 0"><span style="color:var(--gray);font-size:0.75rem">Account Name</span><strong id="walletVAName" style="font-size:0.78rem"></strong></div>
-        </div>
-      </div>
+      <!-- No virtual account section -->
 
       <div class="table-wrap">
         <table>
@@ -1162,32 +1149,10 @@
       <input type="number" id="fundAmount" placeholder="Minimum ₦100" min="100"/>
     </div>
 
-    <!-- Payment method tabs -->
-    <div style="display:flex;gap:0.5rem;margin-bottom:1.2rem">
-      <button id="tabCard" onclick="switchFundTab('card')" style="flex:1;padding:9px;border:2px solid var(--primary);background:var(--primary);color:#fff;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem">💳 Card / USSD</button>
-      <button id="tabBank" onclick="switchFundTab('bank')" style="flex:1;padding:9px;border:2px solid #e2e8f0;background:#fff;color:var(--gray);border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem">🏦 Bank Transfer</button>
-    </div>
-
-    <!-- Card payment panel -->
+    <!-- Card payment only -->
     <div id="fundPanelCard">
       <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1rem">Pay securely via card, USSD, or bank transfer through Paystack.</p>
       <button class="btn-primary" onclick="payWithPaystack()">Pay with Paystack</button>
-    </div>
-
-    <!-- Bank transfer panel -->
-    <div id="fundPanelBank" style="display:none">
-      <div id="virtualAccountBox" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1rem">
-        <p style="font-weight:700;color:var(--primary);margin-bottom:0.6rem;font-size:0.9rem">Your Dedicated Virtual Account</p>
-        <div id="vaLoading" style="color:var(--gray);font-size:0.85rem">Loading account details...</div>
-        <div id="vaDetails" style="display:none">
-          <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid #d1fae5"><span style="color:var(--gray);font-size:0.85rem">Bank</span><strong id="vaBank" style="font-size:0.85rem"></strong></div>
-          <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid #d1fae5"><span style="color:var(--gray);font-size:0.85rem">Account Number</span><strong id="vaNumber" style="font-size:0.85rem;letter-spacing:1px"></strong></div>
-          <div style="display:flex;justify-content:space-between;padding:0.4rem 0"><span style="color:var(--gray);font-size:0.85rem">Account Name</span><strong id="vaName" style="font-size:0.85rem"></strong></div>
-        </div>
-        <div id="vaError" style="display:none;color:var(--accent);font-size:0.82rem"></div>
-      </div>
-      <p style="font-size:0.78rem;color:var(--gray);margin-bottom:0.8rem">Transfer the exact amount to the account above. Your wallet will be credited automatically once payment is confirmed.</p>
-      <button class="btn-primary" style="background:#059669" onclick="confirmBankTransfer()">I've Made the Transfer</button>
     </div>
   </div>
 </div>
