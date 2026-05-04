@@ -2926,56 +2926,19 @@
     const alertEl = document.getElementById('vaGenAlert');
     const uid = user.uid || user.id;
 
-    // First create a Paystack customer
-    fetch('https://api.paystack.co/customer', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: user.email,
-        first_name: (user.name || '').split(' ')[0] || 'User',
-        last_name: (user.name || '').split(' ').slice(1).join(' ') || 'Account',
-        phone: user.phone || ''
-      })
-    })
-    .then(r => r.json())
-    .then(function(customerRes) {
-      if (!customerRes.status) throw new Error(customerRes.message || 'Failed to create customer');
-      const customerCode = customerRes.data.customer_code;
-      // Now create dedicated virtual account
-      return fetch('https://api.paystack.co/dedicated_account', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          customer: customerCode,
-          preferred_bank: 'wema-bank'
-        })
-      }).then(r => r.json());
-    })
-    .then(function(dvaRes) {
-      if (!dvaRes.status) throw new Error(dvaRes.message || 'Failed to create virtual account');
-      const va = {
-        bank: dvaRes.data.bank.name,
-        account_number: dvaRes.data.account_number,
-        account_name: dvaRes.data.account_name,
-        customer_code: dvaRes.data.customer.customer_code
-      };
-      // Save to Firestore
-      return window.fbUpdateDoc(window.fbDoc(window.fbDB, 'users', uid), { virtualAccount: va })
-        .then(function() { return va; });
-    })
-    .then(function(va) {
-      showVirtualAccountCard(va);
-      alertEl.innerHTML = '<div class="alert alert-success">✅ Your dedicated account has been created!</div>';
-      btn.textContent = '✅ Account Ready';
-    })
-    .catch(function(e) {
-      alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '. Please contact support.</div>';
+    // Save DVA request to Firestore — admin processes via Paystack dashboard
+    window.fbSetDoc(window.fbDoc(window.fbDB, 'va_requests', uid), {
+      userId: uid,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      requestedAt: new Date().toISOString(),
+      status: 'pending'
+    }).then(function() {
+      alertEl.innerHTML = '<div class="alert alert-success">✅ Request submitted! Your dedicated account will be ready within minutes.</div>';
+      btn.textContent = '⏳ Request Submitted';
+    }).catch(function(e) {
+      alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '</div>';
       btn.disabled = false;
       btn.textContent = '🏦 Request Virtual Account';
     });

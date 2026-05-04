@@ -512,48 +512,8 @@
       });
 
       // Auto-create Paystack Dedicated Virtual Account for new user
-      try {
-        const customerRes = await fetch('https://api.paystack.co/customer', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            email: email,
-            first_name: name.split(' ')[0] || 'User',
-            last_name: name.split(' ').slice(1).join(' ') || 'Account',
-            phone: phone
-          })
-        }).then(r => r.json());
-
-        if (customerRes.status) {
-          const dvaRes = await fetch('https://api.paystack.co/dedicated_account', {
-            method: 'POST',
-            headers: {
-              'Authorization': 'Bearer sk_live_2eb27b971a3e56bafb70c41489ef87f4028d702b',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              customer: customerRes.data.customer_code,
-              preferred_bank: 'wema-bank'
-            })
-          }).then(r => r.json());
-
-          if (dvaRes.status) {
-            await window._setDoc(window._doc(window._db, "users", uid), {
-              virtualAccount: {
-                bank: dvaRes.data.bank.name,
-                account_number: dvaRes.data.account_number,
-                account_name: dvaRes.data.account_name,
-                customer_code: dvaRes.data.customer.customer_code
-              }
-            }, { merge: true });
-          }
-        }
-      } catch (dvaErr) {
-        console.warn('DVA creation failed (non-critical):', dvaErr.message);
-      }
+      // DVA creation is handled when user first visits wallet section
+      // This keeps secret keys off the frontend
 
       showMsg("msg-register", "Account created! Redirecting…", "success");
       setTimeout(() => { window.location.href = "user/dashboard.html"; }, 1200);
