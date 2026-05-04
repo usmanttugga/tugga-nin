@@ -108,7 +108,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Ref</th><th>User ID</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <thead><tr><th>Ref</th><th>User</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
           <tbody id="allTxnTable"><tr><td colspan="8" style="text-align:center;color:#999">No transactions</td></tr></tbody>
         </table>
       </div>
@@ -150,7 +150,7 @@
       </div>
       <div class="table-wrap" style="margin-top:0.5rem">
         <table>
-          <thead><tr><th>Ref</th><th>User ID</th><th>Service</th><th>Details / Input</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <thead><tr><th>Ref</th><th>User</th><th>Service</th><th>Details / Input</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
           <tbody id="ninTxnTable"><tr><td colspan="8" style="text-align:center;color:#999">No NIN transactions</td></tr></tbody>
         </table>
       </div>
@@ -609,7 +609,7 @@
     tbody.innerHTML = txns.slice(0, 10).map(t => {
       const badgeClass = t.status === 'success' ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
       const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
-      return `<tr><td>${t.id}</td><td>User #${t.userId}</td><td>${t.service}</td>
+      return `<tr><td>${t.id}</td><td>${t.userId}</td><td>${t.service}</td>
       <td>${fmt(t.amount)}</td>
       <td><span class="badge badge-${badgeClass}">${displayStatus}</span></td>
       <td>${t.date}</td></tr>`;
@@ -682,11 +682,16 @@
     document.getElementById('fundUserName').textContent = name;
     document.getElementById('fundAmount').value = '';
     document.getElementById('fundWalletAlert').innerHTML = '';
+    // Store email for transaction record
+    const users = window._fbUsers || [];
+    const u = users.find(x => (x.uid || x.id) === uid);
+    document.getElementById('fundUserId').dataset.email = u ? u.email : uid;
     openModal('fundWalletModal');
   }
 
   function confirmFundWallet() {
     const uid = document.getElementById('fundUserId').value;
+    const userEmail = document.getElementById('fundUserId').dataset.email || uid;
     const amount = parseInt(document.getElementById('fundAmount').value);
     const alertEl = document.getElementById('fundWalletAlert');
     if (!amount || amount < 1) { alertEl.innerHTML = '<div class="alert alert-error">Enter a valid amount.</div>'; return; }
@@ -694,10 +699,9 @@
     if (!window.fbReady) { alertEl.innerHTML = '<div class="alert alert-error">Firebase not ready.</div>'; return; }
     window.fbUpdateDoc(window.fbDoc(window.fbDB, 'users', uid), { wallet: window.fbIncrement(amount) })
       .then(function() {
-        // Record funding transaction so it appears in stats and history
         const txn = {
           id: 'TXN' + Date.now(),
-          userId: uid,
+          userId: userEmail,
           service: 'Wallet Funding',
           details: 'Admin Funding',
           amount: amount,
@@ -745,7 +749,7 @@
       const viewBtn = `<button onclick="openRequestDetails('${t.id}')" style="background:var(--accent);color:var(--primary);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">👁 View</button>`;
       return `<tr>
         <td style="font-size:0.75rem">${t.id}</td>
-        <td style="font-size:0.75rem">#${t.userId}</td>
+        <td style="font-size:0.75rem">${t.userId}</td>
         <td style="font-size:0.82rem">${t.service}</td>
         <td style="font-size:0.82rem">${t.details}</td>
         <td>${fmt(t.amount)}</td>
@@ -1137,7 +1141,7 @@
     const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status;
     document.getElementById('rdMeta').innerHTML =
       `<span>Ref: <strong>${t.id}</strong></span>` +
-      `<span>User ID: <strong>${t.userId || '—'}</strong></span>` +
+      `<span>User: <strong>${t.userId || '—'}</strong></span>` +
       `<span>Date: <strong>${t.date}</strong></span>` +
       `<span>Amount: <strong>${fmt(t.amount)}</strong></span>` +
       `<span>Status: <span class="badge badge-${badgeClass}">${displayStatus}</span></span>`;

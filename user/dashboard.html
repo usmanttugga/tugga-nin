@@ -1494,7 +1494,7 @@
     if (slipUrl) delete formData.slipUrl;
     const txn = {
       id: 'TXN' + Date.now(),
-      userId: user.id,
+      userId: user.email,
       service: service,
       details: details,
       amount: fee,
@@ -1735,7 +1735,7 @@
 
     const txn = {
       id: "TXN" + Date.now(),
-      userId: user.id,
+      userId: user.email,
       service: currentService.title,
       details: details,
       amount: currentService.price,
@@ -2966,7 +2966,7 @@
       callback: function(response) {
         // Payment successful — credit wallet
         walletBalance += amt;
-        addTransaction(user.id || user.uid, 'Wallet Funding', 'Paystack Ref: ' + response.reference, amt);
+        addTransaction(user.email, 'Wallet Funding', 'Paystack Ref: ' + response.reference, amt);
         syncWalletToFirebase();
         closeModal('fundModal');
         toast('Wallet funded with ' + fmt(amt) + ' via Paystack!');
