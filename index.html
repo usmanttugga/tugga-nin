@@ -471,7 +471,7 @@
       setLoading("btn-login", false, "Sign In");
       hideLoader();
       console.error("Login error:", e.code, e.message);
-      showMsg("msg-login", friendlyError(e.code) + " (Code: " + e.code + ")", "error");
+      showMsg("msg-login", e.message === "Firebase failed to load." ? "Connection error. Please refresh the page and try again." : friendlyError(e.code) + (e.code ? " (Code: " + e.code + ")" : " — " + e.message), "error");
     }
   }
 
@@ -516,7 +516,7 @@
     } catch (e) {
       setLoading("btn-register", false, "Create Account");
       hideLoader();
-      showMsg("msg-register", friendlyError(e.code), "error");
+      showMsg("msg-register", e.message === "Firebase failed to load." ? "Connection error. Please refresh the page and try again." : friendlyError(e.code) + (e.code ? " (Code: " + e.code + ")" : " — " + e.message), "error");
     }
   }
 
@@ -530,7 +530,7 @@
     try {
       await waitFB();
       const actionCodeSettings = {
-        url: window.location.origin + '/tugga-nin/index.html',
+        url: window.location.origin + '/index.html',
         handleCodeInApp: false
       };
       await window._resetPwd(window._auth, email, actionCodeSettings);
