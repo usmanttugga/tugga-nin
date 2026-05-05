@@ -1509,6 +1509,7 @@
       window.fbSetDoc(window.fbDoc(window.fbDB, 'transactions', txn.id), txn)
         .catch(e => console.error('Firebase txn error:', e));
     }
+    syncWalletToFirebase();
     return txn;
   }
 
@@ -1712,6 +1713,7 @@
       return;
     }
     walletBalance -= currentService.price;
+    syncWalletToFirebase();
     const details = currentService.type === "nin"
       ? (document.getElementById("f_nin")?.value || "N/A")
       : (document.getElementById("f_bvn")?.value || "N/A");
