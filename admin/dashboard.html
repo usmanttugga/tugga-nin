@@ -662,7 +662,7 @@
         <td>${fmt(u.wallet||0)}</td>
         <td>${statusBadge}</td>
         <td>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:120px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;min-width:160px">
             <button onclick="openFundWallet('${uid}','${u.name}')" style="background:var(--accent);color:var(--primary);border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:700">💰 Fund</button>
             <button onclick="openDeductWallet('${uid}','${u.name}','${u.email}')" style="background:#7c3aed;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">➖ Deduct</button>
             ${suspended
