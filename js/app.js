@@ -63,7 +63,8 @@ function addTransaction(userId, service, details, amount, status = "success") {
 }
 
 function getUserTransactions(userId) {
-  return transactions.filter(t => t.userId === userId);
+  // Match by UID or email since userId field may contain either
+  return transactions.filter(t => t.userId === userId || t.userId === (window._currentUserEmail || ''));
 }
 
 // ── Modal ─────────────────────────────────────────────

@@ -1165,6 +1165,9 @@
   let walletBalance = user ? (parseFloat(user.wallet) || 0) : 0;
   let currentService = {};
 
+  // Set global email for transaction filtering
+  if (user) window._currentUserEmail = user.email;
+
   if (user) {
     document.getElementById("userName").textContent = user.name;
     document.getElementById("greetName").textContent = user.name.split(" ")[0];
@@ -1356,7 +1359,7 @@
       document.getElementById('profilePhone').textContent  = user.phone || '—';
       document.getElementById('profileNin').textContent    = user.nin || '—';
       document.getElementById('profileWallet').textContent = fmt(walletBalance);
-      document.getElementById('profileTxns').textContent   = getUserTransactions(user.id).length;
+      document.getElementById('profileTxns').textContent   = getUserTransactions(user.id || user.uid).length;
       document.getElementById('profileSince').textContent  = user.registeredAt || '—';
     }
     if (id === 'changePwdModal') {
@@ -1385,7 +1388,7 @@
   }
 
   function updateStats() {
-    const txns = getUserTransactions(user.id);
+    const txns = getUserTransactions(user.id || user.uid);
     document.getElementById("statNin").textContent = txns.filter(t => t.service.includes("NIN") || t.service.includes("VNIN") || t.service.includes("IPE")).length;
     document.getElementById("statBvn").textContent = txns.filter(t => t.service.includes("BVN")).length;
     document.getElementById("statAirtime").textContent = txns.filter(t => t.service.includes("Airtime")).length;
@@ -1395,7 +1398,7 @@
   }
 
   function renderHistory() {
-    const txns = getUserTransactions(user.id);
+    const txns = getUserTransactions(user.id || user.uid);
     const tbody = document.getElementById("historyTable");
     const wbody = document.getElementById("walletTxnTable");
     if (!txns.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999">No transactions yet</td></tr>'; return; }
@@ -1447,7 +1450,7 @@
     if (!container) return;
     const services = SVC_HISTORY_MAP[sectionId];
     if (!services) return;
-    const txns = getUserTransactions(user.id).filter(t => services.includes(t.service));
+    const txns = getUserTransactions(user.id || user.uid).filter(t => services.includes(t.service));
     const isNinVerify = sectionId === 'sec-nin-verify';
     if (!txns.length) {
       container.innerHTML = '<p style="margin-top:1.5rem;color:var(--gray);font-size:0.9rem;text-align:center">No history for this service yet.</p>';
