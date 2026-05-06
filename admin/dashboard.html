@@ -428,6 +428,23 @@
   </div>
 </div>
 
+<!-- DEDUCT WALLET MODAL -->
+<div class="modal-overlay" id="deductWalletModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>➖ Deduct User Wallet</h3>
+      <button class="modal-close" onclick="closeModal('deductWalletModal')">✕</button>
+    </div>
+    <div id="deductWalletAlert"></div>
+    <p style="font-size:0.9rem;color:var(--gray);margin-bottom:1rem">Deducting from: <strong id="deductUserName"></strong></p>
+    <div class="form-group"><label>Amount (₦)</label><input type="number" id="deductAmount" placeholder="Enter amount" min="1"/></div>
+    <div class="form-group"><label>Reason</label><input type="text" id="deductReason" placeholder="e.g. Service charge, Reversal..."/></div>
+    <input type="hidden" id="deductUserId"/>
+    <input type="hidden" id="deductUserEmail"/>
+    <button class="btn-primary" style="background:#7c3aed" onclick="confirmDeductWallet()">➖ Deduct</button>
+  </div>
+</div>
+
 <!-- FUND WALLET MODAL -->
 <div class="modal-overlay" id="fundWalletModal">
   <div class="modal">
@@ -647,6 +664,7 @@
         <td>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:120px">
             <button onclick="openFundWallet('${uid}','${u.name}')" style="background:var(--accent);color:var(--primary);border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:700">💰 Fund</button>
+            <button onclick="openDeductWallet('${uid}','${u.name}','${u.email}')" style="background:#7c3aed;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">➖ Deduct</button>
             ${suspended
               ? `<button onclick="unsuspendUser('${uid}')" style="background:#059669;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">✅ Unsuspend</button>`
               : `<button onclick="suspendUser('${uid}')" style="background:#e53e3e;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🚫 Suspend</button>`}
@@ -722,6 +740,44 @@
         window.fbAddDoc(window.fbCollection(window.fbDB, 'transactions'), txn);
         closeModal('fundWalletModal');
         toast('Wallet funded successfully!');
+      })
+      .catch(function(e) { alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '</div>'; });
+  }
+
+  function openDeductWallet(uid, name, email) {
+    document.getElementById('deductUserId').value = uid;
+    document.getElementById('deductUserEmail').value = email || uid;
+    document.getElementById('deductUserName').textContent = name;
+    document.getElementById('deductAmount').value = '';
+    document.getElementById('deductReason').value = '';
+    document.getElementById('deductWalletAlert').innerHTML = '';
+    openModal('deductWalletModal');
+  }
+
+  function confirmDeductWallet() {
+    const uid    = document.getElementById('deductUserId').value;
+    const email  = document.getElementById('deductUserEmail').value;
+    const amount = parseInt(document.getElementById('deductAmount').value);
+    const reason = document.getElementById('deductReason').value.trim();
+    const alertEl = document.getElementById('deductWalletAlert');
+    if (!amount || amount < 1) { alertEl.innerHTML = '<div class="alert alert-error">Enter a valid amount.</div>'; return; }
+    if (!reason) { alertEl.innerHTML = '<div class="alert alert-error">Please provide a reason.</div>'; return; }
+    alertEl.innerHTML = '<div class="alert alert-info">Processing...</div>';
+    if (!window.fbReady) { alertEl.innerHTML = '<div class="alert alert-error">Firebase not ready.</div>'; return; }
+    window.fbUpdateDoc(window.fbDoc(window.fbDB, 'users', uid), { wallet: window.fbIncrement(-amount) })
+      .then(function() {
+        const txn = {
+          id: 'TXN' + Date.now(),
+          userId: email,
+          service: 'Wallet Deduction',
+          details: 'Admin Deduction: ' + reason,
+          amount: amount,
+          status: 'success',
+          date: new Date().toLocaleString()
+        };
+        window.fbAddDoc(window.fbCollection(window.fbDB, 'transactions'), txn);
+        closeModal('deductWalletModal');
+        toast('Wallet deducted successfully!');
       })
       .catch(function(e) { alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '</div>'; });
   }
