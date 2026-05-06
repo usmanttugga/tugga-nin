@@ -1506,6 +1506,9 @@
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "users"), function(snap) {
       const users = snap.docs.map(d => ({ ...d.data(), uid: d.id }));
       window._fbUsers = users;
+      document.getElementById("statUsers").textContent = users.filter(u => u.role !== 'admin').length;
+      loadUsers();
+    });
 
     // Real-time VA requests
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "va_requests"), function(snap) {
@@ -1523,9 +1526,6 @@
       } else {
         box.style.display = 'none';
       }
-    });
-      document.getElementById("statUsers").textContent = users.filter(u => u.role !== 'admin').length;
-      loadUsers();
     });
 
     // Real-time platform settings
