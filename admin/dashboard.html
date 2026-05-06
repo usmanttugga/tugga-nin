@@ -91,9 +91,18 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Status</th><th>Action</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Status</th><th>Action</th></tr></thead>
           <tbody id="usersTable"></tbody>
         </table>
+      </div>
+      <!-- Pagination -->
+      <div id="usersPagination" style="display:flex;align-items:center;justify-content:space-between;padding:0.8rem 0;flex-wrap:wrap;gap:0.5rem">
+        <span id="usersPageInfo" style="font-size:0.82rem;color:var(--gray)"></span>
+        <div style="display:flex;gap:0.4rem">
+          <button id="usersPrevBtn" onclick="usersChangePage(-1)" style="padding:5px 14px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:0.82rem;font-weight:600">← Prev</button>
+          <span id="usersPageBtns" style="display:flex;gap:0.3rem"></span>
+          <button id="usersNextBtn" onclick="usersChangePage(1)" style="padding:5px 14px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;cursor:pointer;font-size:0.82rem;font-weight:600">Next →</button>
+        </div>
       </div>
     </section>
 
@@ -644,35 +653,65 @@
     }).join("");
   }
 
+  let _usersPage = 1;
+  const _usersPerPage = 20;
+
   function loadUsers() {
-    const users = window._fbUsers || MOCK_USERS;
-    document.getElementById("statUsers").textContent = users.filter(u => u.role !== 'admin').length;
-    document.getElementById("usersTable").innerHTML = users.map(u => {
+    const users = (window._fbUsers || MOCK_USERS).filter(u => u.role !== 'admin');
+    document.getElementById("statUsers").textContent = users.length;
+    const totalPages = Math.max(1, Math.ceil(users.length / _usersPerPage));
+    if (_usersPage > totalPages) _usersPage = totalPages;
+    const start = (_usersPage - 1) * _usersPerPage;
+    const pageUsers = users.slice(start, start + _usersPerPage);
+
+    document.getElementById("usersTable").innerHTML = pageUsers.map(u => {
       const uid = u.uid || u.id;
       const suspended = u.status === 'Suspended';
       const statusBadge = suspended
         ? '<span class="badge badge-failed">Suspended</span>'
         : '<span class="badge badge-success">Active</span>';
-      const suspendBtn = suspended
-        ? `<button onclick="unsuspendUser('${uid}')" style="background:var(--primary);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem">Unsuspend</button>`
-        : `<button onclick="suspendUser('${uid}')" style="background:#e53e3e;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.8rem">Suspend</button>`;
       return `<tr>
-        <td style="font-size:0.78rem">${uid}</td><td>${u.name}</td><td>${u.email}</td>
+        <td><strong style="font-size:0.85rem">${u.name}</strong></td>
+        <td style="font-size:0.82rem">${u.email}</td>
         <td><span class="badge badge-${u.role === 'admin' ? 'pending' : 'success'}">${u.role}</span></td>
-        <td>${fmt(u.wallet||0)}</td>
+        <td><strong style="color:var(--primary)">${fmt(u.wallet||0)}</strong></td>
         <td>${statusBadge}</td>
         <td>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;min-width:160px">
-            <button onclick="openFundWallet('${uid}','${u.name}')" style="background:var(--accent);color:var(--primary);border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:700">💰 Fund</button>
-            <button onclick="openDeductWallet('${uid}','${u.name}','${u.email}')" style="background:#7c3aed;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">➖ Deduct</button>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button onclick="openFundWallet('${uid}','${u.name}')" title="Fund Wallet" style="background:#059669;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">💰</button>
+            <button onclick="openDeductWallet('${uid}','${u.name}','${u.email}')" title="Deduct Wallet" style="background:#7c3aed;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">➖</button>
             ${suspended
-              ? `<button onclick="unsuspendUser('${uid}')" style="background:#059669;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">✅ Unsuspend</button>`
-              : `<button onclick="suspendUser('${uid}')" style="background:#e53e3e;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🚫 Suspend</button>`}
-            <button onclick="openAssignVA('${uid}','${u.name}')" style="background:#1e40af;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🏦 VA</button>
-            <button onclick="deleteUser('${uid}','${u.name}')" style="background:#1a1a2e;color:#fff;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🗑 Delete</button>
+              ? `<button onclick="unsuspendUser('${uid}')" title="Unsuspend" style="background:var(--primary);color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">✅</button>`
+              : `<button onclick="suspendUser('${uid}')" title="Suspend" style="background:#e53e3e;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🚫</button>`}
+            <button onclick="openAssignVA('${uid}','${u.name}')" title="Assign Virtual Account" style="background:#1e40af;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🏦</button>
+            <button onclick="deleteUser('${uid}','${u.name}')" title="Delete User" style="background:#1a1a2e;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">🗑</button>
           </div>
         </td></tr>`;
     }).join("");
+
+    // Pagination info
+    document.getElementById('usersPageInfo').textContent =
+      `Showing ${start + 1}–${Math.min(start + _usersPerPage, users.length)} of ${users.length} users`;
+    document.getElementById('usersPrevBtn').disabled = _usersPage === 1;
+    document.getElementById('usersNextBtn').disabled = _usersPage === totalPages;
+
+    // Page number buttons
+    const pageBtns = document.getElementById('usersPageBtns');
+    pageBtns.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.onclick = function() { _usersPage = i; loadUsers(); };
+      btn.style.cssText = `padding:5px 10px;border:1px solid ${i === _usersPage ? 'var(--primary)' : '#e2e8f0'};border-radius:6px;background:${i === _usersPage ? 'var(--primary)' : '#fff'};color:${i === _usersPage ? '#fff' : 'var(--dark)'};cursor:pointer;font-size:0.82rem;font-weight:600`;
+      pageBtns.appendChild(btn);
+    }
+  }
+
+  function usersChangePage(dir) {
+    const users = (window._fbUsers || MOCK_USERS).filter(u => u.role !== 'admin');
+    const totalPages = Math.max(1, Math.ceil(users.length / _usersPerPage));
+    _usersPage = Math.max(1, Math.min(_usersPage + dir, totalPages));
+    loadUsers();
   }
 
   function openAssignVA(uid, name) {
