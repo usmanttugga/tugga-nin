@@ -1229,7 +1229,11 @@
     // BVN
     'BVN Verification':           ['BVN Number','Full Name','Phone Number'],
     'BVN Retrieval':              ['BVN Number','Full Name','Phone Number'],
-    'BVN Modification':           ['BVN Number','Full Name','Phone Number'],
+    'BVN Change of Name':                              ['BVN Number','New First Name','New Last Name','Middle Name'],
+    'BVN Change of Date of Birth':                     ['BVN Number','New Date of Birth'],
+    'BVN Change of Phone Number':                      ['BVN Number','New Phone Number'],
+    'BVN Change of Name and Date of Birth':            ['BVN Number','New First Name','New Last Name','Middle Name','New Date of Birth'],
+    'BVN Change of Name, Phone Number and Date of Birth': ['BVN Number','New First Name','New Last Name','Middle Name','New Phone Number','New Date of Birth'],
     'BVN User':                   ['BVN Number','Full Name','Phone Number'],
     // Utility
     'Buy Airtime':                ['Network','Phone','Amount'],
@@ -1327,7 +1331,7 @@
     const bvn = allTxns.filter(t => t.service.includes("BVN"));
     document.getElementById("bvnVerCount").textContent  = bvn.filter(t => t.service === "BVN Verification").length;
     document.getElementById("bvnRetCount").textContent  = bvn.filter(t => t.service === "BVN Retrieval").length;
-    document.getElementById("bvnModCount").textContent  = bvn.filter(t => t.service === "BVN Modification").length;
+    document.getElementById("bvnModCount").textContent  = bvn.filter(t => t.service.startsWith("BVN Change of")).length;
     document.getElementById("bvnUserCount").textContent = bvn.filter(t => t.service === "BVN User").length;
     const tbody = document.getElementById("bvnTxnTable");
     if (!bvn.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999">No BVN transactions</td></tr>'; return; }
@@ -1666,7 +1670,7 @@
     { label: '✏️ NIN Modification', key: 'grp_nin_mod',    services: ['Name Modification','Phone Number Modification','Address Modification','Date of Birth Modification'] },
     { label: '✅ IPE Clearance',    key: 'grp_ipe',        services: ['Normal Clearance','Modification Clearance','Other Error'] },
     { label: '🔧 Self Services',    key: 'grp_selfsvcs',   services: ['Delinking','Email Retrieval and Delinking','Email Retrieval Only','Date of Birth Attestation'] },
-    { label: '🏦 BVN Services',     key: 'grp_bvn',        services: ['BVN Verification','BVN Retrieval','BVN Modification','BVN User'] },
+    { label: '🏦 BVN Services',     key: 'grp_bvn',        services: ['BVN Verification','BVN Retrieval','BVN User','BVN Change of Name','BVN Change of Date of Birth','BVN Change of Phone Number','BVN Change of Name and Date of Birth','BVN Change of Name, Phone Number and Date of Birth'] },
     { label: '📞 Airtime & Data',   key: 'grp_utility',    services: ['Buy Airtime','Buy Data'] }
   ];
 

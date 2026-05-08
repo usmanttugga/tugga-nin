@@ -317,14 +317,38 @@
         <div class="service-card" data-svc="BVN Retrieval" onclick="openServiceModal('BVN Retrieval','Retrieve your BVN number','bvn','150')">
           <div class="svc-icon">🔍</div><h4>BVN Retrieval</h4><p>Retrieve your BVN</p><div class="price">₦150</div>
         </div>
-        <div class="service-card" data-svc="BVN Modification" onclick="openServiceModal('BVN Modification','Update or correct BVN records','bvn','500')">
-          <div class="svc-icon">🔧</div><h4>BVN Modification</h4><p>Update BVN records</p><div class="price">₦500</div>
+        <div class="service-card" data-svc="BVN Modification" onclick="showSection('sec-bvn-modification')">
+          <div class="svc-icon">🔧</div><h4>BVN Modification</h4><p>Update BVN records</p>
         </div>
         <div class="service-card" data-svc="BVN User" onclick="openServiceModal('BVN User','Get BVN user profile details','bvn','200')">
           <div class="svc-icon">👤</div><h4>BVN User</h4><p>BVN user profile</p><div class="price">₦200</div>
         </div>
       </div>
       <div id="svcHistory-sec-bvn"></div>
+    </section>
+
+    <!-- BVN MODIFICATION SUB-SERVICES -->
+    <section id="sec-bvn-modification" class="content-section section-hidden">
+      <p class="page-title">BVN Modification</p>
+      <p class="page-sub">Select the type of BVN modification you need.</p>
+      <div class="services-grid">
+        <div class="service-card" data-svc="BVN Change of Name" onclick="openBvnModModal('name')">
+          <div class="svc-icon">✏️</div><h4>Change of Name</h4><p>Update name on BVN</p><div class="price" id="price-bvn-name">₦500</div>
+        </div>
+        <div class="service-card" data-svc="BVN Change of Date of Birth" onclick="openBvnModModal('dob')">
+          <div class="svc-icon">📅</div><h4>Change of Date of Birth</h4><p>Update DOB on BVN</p><div class="price" id="price-bvn-dob">₦500</div>
+        </div>
+        <div class="service-card" data-svc="BVN Change of Phone Number" onclick="openBvnModModal('phone')">
+          <div class="svc-icon">📞</div><h4>Change of Phone Number</h4><p>Update phone on BVN</p><div class="price" id="price-bvn-phone">₦500</div>
+        </div>
+        <div class="service-card" data-svc="BVN Change of Name and Date of Birth" onclick="openBvnModModal('name-dob')">
+          <div class="svc-icon">📝</div><h4>Change of Name &amp; DOB</h4><p>Update name and DOB on BVN</p><div class="price" id="price-bvn-name-dob">₦500</div>
+        </div>
+        <div class="service-card" data-svc="BVN Change of Name, Phone Number and Date of Birth" onclick="openBvnModModal('name-phone-dob')">
+          <div class="svc-icon">🔄</div><h4>Change of Name, Phone &amp; DOB</h4><p>Update name, phone and DOB on BVN</p><div class="price" id="price-bvn-all">₦500</div>
+        </div>
+      </div>
+      <div id="svcHistory-sec-bvn-modification"></div>
     </section>
 
     <!-- AIRTIME -->
@@ -1040,6 +1064,27 @@
   </div>
 </div>
 
+<!-- BVN MODIFICATION MODAL -->
+<div class="modal-overlay" id="bvnModModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h3 id="bvnModTitle">🔧 BVN Modification</h3>
+      <button class="modal-close" onclick="closeModal('bvnModModal')">✕</button>
+    </div>
+    <div id="bvnModAlert"></div>
+    <div class="form-group">
+      <label>BVN Number</label>
+      <input type="text" id="bm_bvn" placeholder="11-digit BVN" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      <span id="bm_bvn_err" style="color:var(--accent);font-size:0.8rem"></span>
+    </div>
+    <div id="bvnModFields"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem">
+      <span style="font-weight:700;color:var(--accent)" id="bvnModPrice"></span>
+      <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="submitBvnMod()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
 <!-- SELF SERVICES MODAL -->
 <div class="modal-overlay" id="selfServiceModal">
   <div class="modal" style="max-width:440px">
@@ -1287,7 +1332,7 @@
     'sec-mod-validation': 'Modification Validation'
   };
   const _sectionParent = {
-    'sec-nin': 'sec-home', 'sec-bvn': 'sec-home',
+    'sec-nin': 'sec-home', 'sec-bvn': 'sec-home', 'sec-bvn-modification': 'sec-bvn',
     'sec-airtime': 'sec-home', 'sec-data': 'sec-home',
     'sec-history': 'sec-home', 'sec-wallet': 'sec-home',
     'sec-nin-verify': 'sec-nin', 'sec-nin-validation': 'sec-nin',
@@ -1440,7 +1485,8 @@
     'sec-ipe':              ['Normal Clearance','Modification Clearance','Other Error'],
     'sec-vnin':             ['VNIN Slip'],
     'sec-nin-person':       ['NIN Personalization'],
-    'sec-bvn':              ['BVN Verification','BVN Retrieval','BVN Modification','BVN User'],
+    'sec-bvn':              ['BVN Verification','BVN Retrieval','BVN User'],
+    'sec-bvn-modification': ['BVN Change of Name','BVN Change of Date of Birth','BVN Change of Phone Number','BVN Change of Name and Date of Birth','BVN Change of Name, Phone Number and Date of Birth'],
     'sec-airtime':          ['Buy Airtime'],
     'sec-data':             ['Buy Data']
   };
@@ -1852,7 +1898,9 @@
       'Delinking':'grp_selfsvcs','Email Retrieval and Delinking':'grp_selfsvcs',
       'Email Retrieval Only':'grp_selfsvcs','Date of Birth Attestation':'grp_selfsvcs',
       'BVN Verification':'grp_bvn','BVN Retrieval':'grp_bvn',
-      'BVN Modification':'grp_bvn','BVN User':'grp_bvn',
+      'BVN Change of Name':'grp_bvn','BVN Change of Date of Birth':'grp_bvn',
+      'BVN Change of Phone Number':'grp_bvn','BVN Change of Name and Date of Birth':'grp_bvn',
+      'BVN Change of Name, Phone Number and Date of Birth':'grp_bvn','BVN User':'grp_bvn',
       'Buy Airtime':'grp_utility','Buy Data':'grp_utility'
     };
     var grpKey = svcGroups[svc];
@@ -1883,7 +1931,9 @@
       'NIN Personalization':'grp_nin_verify','VNIN Slip':'grp_nin_verify',
       'Normal Clearance':'grp_ipe','Modification Clearance':'grp_ipe','Other Error':'grp_ipe',
       'BVN Verification':'grp_bvn','BVN Retrieval':'grp_bvn',
-      'BVN Modification':'grp_bvn','BVN User':'grp_bvn',
+      'BVN Change of Name':'grp_bvn','BVN Change of Date of Birth':'grp_bvn',
+      'BVN Change of Phone Number':'grp_bvn','BVN Change of Name and Date of Birth':'grp_bvn',
+      'BVN Change of Name, Phone Number and Date of Birth':'grp_bvn','BVN User':'grp_bvn',
       'Buy Airtime':'grp_utility','Buy Data':'grp_utility'
     };
 
@@ -2997,6 +3047,104 @@
   function fundWallet() {
     // Legacy fallback — kept for compatibility
     payWithPaystack();
+  }
+
+  // ── BVN Modification ──────────────────────────────
+  let _bvnModType = '';
+  const _bvnModConfig = {
+    'name': {
+      title: 'BVN Change of Name',
+      priceKey: 'bvnmod',
+      fields: `
+        <div class="form-group"><label>New First Name</label><input type="text" id="bm_firstname" placeholder="New first name"/><span id="bm_firstname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>New Last Name</label><input type="text" id="bm_lastname" placeholder="New last name"/><span id="bm_lastname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>Middle Name (optional)</label><input type="text" id="bm_middlename" placeholder="Middle name"/></div>`
+    },
+    'dob': {
+      title: 'BVN Change of Date of Birth',
+      priceKey: 'bvnmod',
+      fields: `
+        <div class="form-group"><label>New Date of Birth</label><input type="date" id="bm_dob"/><span id="bm_dob_err" style="color:var(--accent);font-size:0.8rem"></span></div>`
+    },
+    'phone': {
+      title: 'BVN Change of Phone Number',
+      priceKey: 'bvnmod',
+      fields: `
+        <div class="form-group"><label>New Phone Number</label><input type="tel" id="bm_phone" placeholder="08XXXXXXXXXX" maxlength="11"/><span id="bm_phone_err" style="color:var(--accent);font-size:0.8rem"></span></div>`
+    },
+    'name-dob': {
+      title: 'BVN Change of Name and Date of Birth',
+      priceKey: 'bvnmod',
+      fields: `
+        <div class="form-group"><label>New First Name</label><input type="text" id="bm_firstname" placeholder="New first name"/><span id="bm_firstname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>New Last Name</label><input type="text" id="bm_lastname" placeholder="New last name"/><span id="bm_lastname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>Middle Name (optional)</label><input type="text" id="bm_middlename" placeholder="Middle name"/></div>
+        <div class="form-group"><label>New Date of Birth</label><input type="date" id="bm_dob"/><span id="bm_dob_err" style="color:var(--accent);font-size:0.8rem"></span></div>`
+    },
+    'name-phone-dob': {
+      title: 'BVN Change of Name, Phone Number and Date of Birth',
+      priceKey: 'bvnmod',
+      fields: `
+        <div class="form-group"><label>New First Name</label><input type="text" id="bm_firstname" placeholder="New first name"/><span id="bm_firstname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>New Last Name</label><input type="text" id="bm_lastname" placeholder="New last name"/><span id="bm_lastname_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>Middle Name (optional)</label><input type="text" id="bm_middlename" placeholder="Middle name"/></div>
+        <div class="form-group"><label>New Phone Number</label><input type="tel" id="bm_phone" placeholder="08XXXXXXXXXX" maxlength="11"/><span id="bm_phone_err" style="color:var(--accent);font-size:0.8rem"></span></div>
+        <div class="form-group"><label>New Date of Birth</label><input type="date" id="bm_dob"/><span id="bm_dob_err" style="color:var(--accent);font-size:0.8rem"></span></div>`
+    }
+  };
+
+  function openBvnModModal(type) {
+    const cfg = _bvnModConfig[type];
+    if (!cfg) return;
+    if (!checkAvailable(cfg.title)) return;
+    _bvnModType = type;
+    refreshPricing();
+    const fee = _p[cfg.priceKey] || 500;
+    document.getElementById('bvnModTitle').textContent = '🔧 ' + cfg.title;
+    document.getElementById('bvnModPrice').textContent = 'Fee: ' + fmt(fee);
+    document.getElementById('bvnModAlert').innerHTML = '';
+    document.getElementById('bm_bvn').value = '';
+    document.getElementById('bm_bvn_err').textContent = '';
+    document.getElementById('bvnModFields').innerHTML = cfg.fields;
+    openModal('bvnModModal');
+  }
+
+  function submitBvnMod() {
+    const cfg = _bvnModConfig[_bvnModType];
+    if (!cfg) return;
+    const alertEl = document.getElementById('bvnModAlert');
+    alertEl.innerHTML = '';
+    const bvn = document.getElementById('bm_bvn').value.trim();
+    if (!/^\d{11}$/.test(bvn)) { document.getElementById('bm_bvn_err').textContent = 'BVN must be exactly 11 digits'; return; }
+    document.getElementById('bm_bvn_err').textContent = '';
+    const fee = _p[cfg.priceKey] || 500;
+    if (walletBalance < fee) { alertEl.innerHTML = '<div class="alert alert-error">Insufficient wallet balance. Please fund your wallet.</div>'; return; }
+    const g = id => document.getElementById(id)?.value.trim() || '';
+    const formData = { 'BVN Number': bvn };
+    if (_bvnModType.includes('name')) {
+      const fn = g('bm_firstname'), ln = g('bm_lastname');
+      if (!fn) { document.getElementById('bm_firstname_err').textContent = 'Required'; return; }
+      if (!ln) { document.getElementById('bm_lastname_err').textContent = 'Required'; return; }
+      formData['New First Name'] = fn;
+      formData['New Last Name'] = ln;
+      if (g('bm_middlename')) formData['Middle Name'] = g('bm_middlename');
+    }
+    if (_bvnModType.includes('phone')) {
+      const ph = g('bm_phone');
+      if (!/^\d{11}$/.test(ph)) { document.getElementById('bm_phone_err').textContent = 'Phone must be 11 digits'; return; }
+      formData['New Phone Number'] = ph;
+    }
+    if (_bvnModType.includes('dob')) {
+      const dob = g('bm_dob');
+      if (!dob) { document.getElementById('bm_dob_err').textContent = 'Required'; return; }
+      formData['New Date of Birth'] = dob;
+    }
+    walletBalance -= fee;
+    submitWithStatus(cfg.title, bvn, fee, 'submitted', formData);
+    updateStats();
+    syncWalletToFirebase();
+    closeModal('bvnModModal');
+    toast(cfg.title + ' request submitted successfully!');
   }
 
   // ── Airtime ────────────────────────────────────────
