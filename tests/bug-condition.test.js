@@ -67,6 +67,7 @@ function setupDashboardDOM() {
     <span id="statNin">0</span>
     <span id="statBvn">0</span>
     <span id="statAirtime">0</span>
+    <span id="statJamb">0</span>
     <span id="statWallet">0</span>
     <span id="greetName"></span>
     <span id="userName"></span>

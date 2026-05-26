@@ -62,6 +62,10 @@
       <a href="#" data-section="sec-airtime" onclick="showSection('sec-airtime')"><span class="icon">📞</span> Buy Airtime</a>
       <a href="#" data-section="sec-data" onclick="showSection('sec-data')"><span class="icon">📶</span> Buy Data</a>
     </div>
+    <div class="menu-section">
+      <h4>JAMB Services</h4>
+      <a href="#" data-section="sec-jamb" onclick="showSection('sec-jamb')"><span class="icon">🎓</span> JAMB Services</a>
+    </div>
   </aside>
 
   <!-- MAIN -->
@@ -76,6 +80,7 @@
         <div class="stat-card"><div class="stat-icon bg-blue">🪪</div><div class="stat-info"><h3 id="statNin">0</h3><p>NIN Requests</p></div></div>
         <div class="stat-card"><div class="stat-icon bg-green">🏦</div><div class="stat-info"><h3 id="statBvn">0</h3><p>BVN Requests</p></div></div>
         <div class="stat-card"><div class="stat-icon bg-orange">📞</div><div class="stat-info"><h3 id="statAirtime">0</h3><p>Airtime Bought</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-blue">🎓</div><div class="stat-info"><h3 id="statJamb">0</h3><p>JAMB Requests</p></div></div>
         <div class="stat-card"><div class="stat-icon bg-red">💰</div><div class="stat-info"><h3 id="statWallet">₦0</h3><p>Wallet Balance</p></div></div>
       </div>
 
@@ -403,6 +408,33 @@
         <button class="btn-primary" onclick="buyData()">Buy Data</button>
       </div>
       <div id="svcHistory-sec-data"></div>
+    </section>
+
+    <!-- JAMB SERVICES -->
+    <section id="sec-jamb" class="content-section section-hidden">
+      <p class="page-title">JAMB Services</p>
+      <p class="page-sub">Joint Admissions and Matriculation Board services.</p>
+      <div class="services-grid">
+        <div class="service-card" data-svc="JAMB Original Result" onclick="openServiceModal('JAMB Original Result','Get your original JAMB result','jamb', String(_p.jamb_original||500))">
+          <div class="svc-icon">🎓</div><h4>JAMB Original Result</h4><p>Original result slip</p><div class="price" id="price-jamb-original">₦500</div>
+        </div>
+        <div class="service-card" data-svc="Reprint JAMB Result" onclick="openServiceModal('Reprint JAMB Result','Reprint your JAMB result','jamb', String(_p.jamb_reprint||500))">
+          <div class="svc-icon">🔄</div><h4>Reprint JAMB Result</h4><p>Reprint result slip</p><div class="price" id="price-jamb-reprint">₦500</div>
+        </div>
+        <div class="service-card" data-svc="Admission Letter" onclick="openServiceModal('Admission Letter','Get your admission letter','jamb', String(_p.jamb_admission||1000))">
+          <div class="svc-icon">📜</div><h4>Admission Letter</h4><p>Admission letter</p><div class="price" id="price-jamb-admission">₦1000</div>
+        </div>
+        <div class="service-card" data-svc="Reprint Admission Letter" onclick="openServiceModal('Reprint Admission Letter','Reprint your admission letter','jamb', String(_p.jamb_reprint_admission||1000))">
+          <div class="svc-icon">📄</div><h4>Reprint Admission Letter</h4><p>Reprint admission letter</p><div class="price" id="price-jamb-reprint-admission">₦1000</div>
+        </div>
+        <div class="service-card" data-svc="Registration Slip" onclick="openServiceModal('Registration Slip','Get your JAMB registration slip','jamb', String(_p.jamb_reg_slip||300))">
+          <div class="svc-icon">📝</div><h4>Registration Slip</h4><p>Registration slip</p><div class="price" id="price-jamb-reg-slip">₦300</div>
+        </div>
+        <div class="service-card" data-svc="Profile Code Retrieval" onclick="openServiceModal('Profile Code Retrieval','Retrieve your profile code','jamb', String(_p.jamb_profile_code||200))">
+          <div class="svc-icon">🔑</div><h4>Profile Code Retrieval</h4><p>Profile code</p><div class="price" id="price-jamb-profile-code">₦200</div>
+        </div>
+      </div>
+      <div id="svcHistory-sec-jamb"></div>
     </section>
 
   </main>
@@ -1437,6 +1469,7 @@
     document.getElementById("statNin").textContent = txns.filter(t => t.service.includes("NIN") || t.service.includes("VNIN") || t.service.includes("IPE")).length;
     document.getElementById("statBvn").textContent = txns.filter(t => t.service.includes("BVN")).length;
     document.getElementById("statAirtime").textContent = txns.filter(t => t.service.includes("Airtime")).length;
+    document.getElementById("statJamb").textContent = txns.filter(t => t.service.includes("JAMB") || t.service === 'Admission Letter' || t.service === 'Registration Slip' || t.service === 'Profile Code Retrieval').length;
     document.getElementById("statWallet").textContent = fmt(walletBalance);
     document.getElementById("walletBal").textContent = fmt(walletBalance) + ".00";
     renderHistory();
@@ -1448,8 +1481,8 @@
     const wbody = document.getElementById("walletTxnTable");
     if (!txns.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999">No transactions yet</td></tr>'; return; }
     tbody.innerHTML = txns.map(t => {
-      const badgeClass = t.status === 'success' ? 'success' : t.status === 'validated' || t.status === 'cleared' || t.status === 'modified' || t.status === 'personalized' || t.status === 'delinked' || t.status === 'retrieved' ? 'success' : t.status === 'pending' ? 'pending' : t.status === 'submitted' ? 'pending' : 'failed';
-      const displayStatus = t.status === 'submitted' ? 'Submitted' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status;
+      const badgeClass = t.status === 'success' ? 'success' : t.status === 'validated' || t.status === 'cleared' || t.status === 'modified' || t.status === 'personalized' || t.status === 'delinked' || t.status === 'retrieved' ? 'success' : t.status === 'pending' || t.status === 'submitted' || t.status === 'processing' ? 'pending' : 'failed';
+      const displayStatus = t.status === 'submitted' ? 'Submitted' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status;
       const detailsCell = t.clearedTrackingId
         ? `${t.details}<br><span style="font-size:0.8rem;color:#059669;font-weight:600">✅ Old ID: ${t.clearedTrackingId}</span>${t.clearedNin ? `<br><span style="font-size:0.8rem;color:#059669;font-weight:600">NIN: ${t.clearedNin}</span>` : ''}`
         : t.retrievedEmail
@@ -1488,7 +1521,8 @@
     'sec-bvn':              ['BVN Verification','BVN Retrieval','BVN User'],
     'sec-bvn-modification': ['BVN Change of Name','BVN Change of Date of Birth','BVN Change of Phone Number','BVN Change of Name and Date of Birth','BVN Change of Name, Phone Number and Date of Birth'],
     'sec-airtime':          ['Buy Airtime'],
-    'sec-data':             ['Buy Data']
+    'sec-data':             ['Buy Data'],
+    'sec-jamb':             ['JAMB Original Result', 'Reprint JAMB Result', 'Admission Letter', 'Reprint Admission Letter', 'Registration Slip', 'Profile Code Retrieval']
   };
 
   function renderServiceHistory(sectionId) {
@@ -1510,8 +1544,8 @@
           <table>
             <thead><tr><th>Ref</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th>${hasDownload ? '<th>Action</th>' : ''}</tr></thead>
             <tbody>${txns.map(t => {
-              const bc = t.status === 'success' || t.status === 'validated' || t.status === 'cleared' || t.status === 'modified' || t.status === 'personalized' || t.status === 'delinked' || t.status === 'retrieved' ? 'success' : t.status === 'pending' || t.status === 'submitted' ? 'pending' : 'failed';
-              const ds = t.status === 'submitted' ? 'Submitted' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status;
+              const bc = t.status === 'success' || t.status === 'validated' || t.status === 'cleared' || t.status === 'modified' || t.status === 'personalized' || t.status === 'delinked' || t.status === 'retrieved' ? 'success' : t.status === 'pending' || t.status === 'submitted' || t.status === 'processing' ? 'pending' : 'failed';
+              const ds = t.status === 'submitted' ? 'Submitted' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status;
               const det = t.clearedTrackingId
                 ? `${t.details}<br><span style="font-size:0.78rem;color:#059669;font-weight:600">✅ Old ID: ${t.clearedTrackingId}</span>${t.clearedNin ? `<br><span style="font-size:0.78rem;color:#059669;font-weight:600">NIN: ${t.clearedNin}</span>` : ''}`
                 : t.retrievedEmail
@@ -1575,6 +1609,29 @@
     <div class="form-group"><label>BVN Number</label><input type="text" id="f_bvn" placeholder="11-digit BVN" maxlength="11"/></div>
     <div class="form-group"><label>Full Name</label><input type="text" id="f_name" placeholder="As on bank records"/></div>
     <div class="form-group"><label>Phone Number</label><input type="tel" id="f_phone" placeholder="08XXXXXXXXXX" maxlength="11"/></div>`;
+
+  const JAMB_FIELDS = {
+    'JAMB Original Result': `
+      <div class="form-group"><label>Registration Number</label><input type="text" id="f_jamb_reg" placeholder="e.g. 12345678AB" maxlength="10"/></div>
+      <div class="form-group"><label>Exam Year</label><input type="text" id="f_jamb_year" placeholder="e.g. 2024" maxlength="4"/></div>`,
+    'Reprint JAMB Result': `
+      <div class="form-group"><label>Registration Number</label><input type="text" id="f_jamb_reg" placeholder="e.g. 12345678AB" maxlength="10"/></div>
+      <div class="form-group"><label>Exam Year</label><input type="text" id="f_jamb_year" placeholder="e.g. 2024" maxlength="4"/></div>`,
+    'Admission Letter': `
+      <div class="form-group"><label>Registration Number</label><input type="text" id="f_jamb_reg" placeholder="e.g. 12345678AB" maxlength="10"/></div>
+      <div class="form-group"><label>Exam Year</label><input type="text" id="f_jamb_year" placeholder="e.g. 2024" maxlength="4"/></div>
+      <div class="form-group"><label>School/University</label><input type="text" id="f_jamb_school" placeholder="Name of institution"/></div>
+      <div class="form-group"><label>Course/Program</label><input type="text" id="f_jamb_course" placeholder="e.g. Computer Science"/></div>`,
+    'Reprint Admission Letter': `
+      <div class="form-group"><label>Registration Number</label><input type="text" id="f_jamb_reg" placeholder="e.g. 12345678AB" maxlength="10"/></div>
+      <div class="form-group"><label>Exam Year</label><input type="text" id="f_jamb_year" placeholder="e.g. 2024" maxlength="4"/></div>
+      <div class="form-group"><label>School/University</label><input type="text" id="f_jamb_school" placeholder="Name of institution"/></div>
+      <div class="form-group"><label>Course/Program</label><input type="text" id="f_jamb_course" placeholder="e.g. Computer Science"/></div>`,
+    'Registration Slip': `
+      <div class="form-group"><label>Registration Number</label><input type="text" id="f_jamb_reg" placeholder="e.g. 12345678AB" maxlength="10"/></div>`,
+    'Profile Code Retrieval': `
+      <div class="form-group"><label>Phone Number</label><input type="tel" id="f_jamb_phone" placeholder="08XXXXXXXXXX" maxlength="11"/></div>`
+  };
 
   const NIN_ONLY_SVCS = ['No Record Found', 'Bank Validation', 'Photograph Error', 'SIM Validation', 'VNIN Slip'];
 
@@ -1743,6 +1800,7 @@
       document.getElementById("modalAlert").innerHTML = "";
       let fields;
       if (type === "bvn") fields = BVN_FIELDS;
+      else if (type === "jamb") fields = JAMB_FIELDS[title] || '';
       else if (NIN_VAL_FIELDS[title]) fields = NIN_VAL_FIELDS[title];
       else if (NIN_ONLY_SVCS.includes(title)) fields = NIN_ONLY_FIELDS;
       else fields = NIN_FIELDS;
@@ -1765,7 +1823,9 @@
     syncWalletToFirebase();
     const details = currentService.type === "nin"
       ? (document.getElementById("f_nin")?.value || "N/A")
-      : (document.getElementById("f_bvn")?.value || "N/A");
+      : currentService.type === "jamb"
+        ? (document.getElementById("f_jamb_reg")?.value || document.getElementById("f_jamb_phone")?.value || "N/A")
+        : (document.getElementById("f_bvn")?.value || "N/A");
 
     // All services submit as "submitted" — admin must validate
     const NIN_VAL_SVCS = ['No Record Found', 'Bank Validation', 'Photograph Error', 'SIM Validation'];
@@ -1781,6 +1841,11 @@
     if (document.getElementById('f_bank'))    formData['Bank Name']      = document.getElementById('f_bank').value;
     if (document.getElementById('f_account')) formData['Account Number'] = document.getElementById('f_account').value;
     if (document.getElementById('f_network')) formData['Network']        = document.getElementById('f_network').value;
+    if (document.getElementById('f_jamb_reg'))   formData['Registration Number'] = document.getElementById('f_jamb_reg').value;
+    if (document.getElementById('f_jamb_year'))  formData['Exam Year']           = document.getElementById('f_jamb_year').value;
+    if (document.getElementById('f_jamb_school')) formData['School/University']  = document.getElementById('f_jamb_school').value;
+    if (document.getElementById('f_jamb_course')) formData['Course/Program']     = document.getElementById('f_jamb_course').value;
+    if (document.getElementById('f_jamb_phone'))  formData['Phone Number']       = document.getElementById('f_jamb_phone').value;
     // Remove empty fields
     Object.keys(formData).forEach(k => { if (!formData[k]) delete formData[k]; });
 
@@ -1850,6 +1915,12 @@
     set('price-email-delink', _p.email_delink || 150);
     set('price-email-only',   _p.email_only   || 150);
     set('price-dob-attest',   _p.dob_attest   || 500);
+    set('price-jamb-original', _p.jamb_original || 500);
+    set('price-jamb-reprint',  _p.jamb_reprint  || 500);
+    set('price-jamb-admission', _p.jamb_admission || 1000);
+    set('price-jamb-reprint-admission', _p.jamb_reprint_admission || 1000);
+    set('price-jamb-reg-slip', _p.jamb_reg_slip || 300);
+    set('price-jamb-profile-code', _p.jamb_profile_code || 200);
   }
 
   // Get fee for a specific method + slip combination

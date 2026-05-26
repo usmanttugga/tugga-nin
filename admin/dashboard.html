@@ -45,6 +45,7 @@
       <a href="#" data-section="sec-nin-admin" onclick="showSection('sec-nin-admin')"><span class="icon">🪪</span> NIN Services</a>
       <a href="#" data-section="sec-bvn-admin" onclick="showSection('sec-bvn-admin')"><span class="icon">🏦</span> BVN Services</a>
       <a href="#" data-section="sec-utility-admin" onclick="showSection('sec-utility-admin')"><span class="icon">📞</span> Airtime & Data</a>
+      <a href="#" data-section="sec-jamb-admin" onclick="showSection('sec-jamb-admin')"><span class="icon">🎓</span> JAMB Services</a>
     </div>
     <div class="menu-section">
       <h4>Settings</h4>
@@ -206,6 +207,26 @@
       </div>
     </section>
 
+    <!-- JAMB ADMIN -->
+    <section id="sec-jamb-admin" class="content-section section-hidden">
+      <p class="page-title">JAMB Services Management</p>
+      <p class="page-sub">Monitor JAMB service requests.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon bg-blue">🎓</div><div class="stat-info"><h3 id="jambOriginalCount">0</h3><p>Original Results</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-green">🔄</div><div class="stat-info"><h3 id="jambReprintCount">0</h3><p>Reprint Results</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-orange">📜</div><div class="stat-info"><h3 id="jambAdmissionCount">0</h3><p>Admission Letters</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-blue">📄</div><div class="stat-info"><h3 id="jambReprintAdmCount">0</h3><p>Reprint Admissions</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-green">📝</div><div class="stat-info"><h3 id="jambRegSlipCount">0</h3><p>Reg Slips</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-orange">🔑</div><div class="stat-info"><h3 id="jambProfileCount">0</h3><p>Profile Codes</p></div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:1rem">
+        <table>
+          <thead><tr><th>Ref</th><th>User</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="jambTxnTable"><tr><td colspan="7" style="text-align:center;color:#999">No JAMB transactions</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- PRICING -->
     <section id="sec-pricing" class="content-section section-hidden">
       <p class="page-title">Service Pricing</p>
@@ -329,6 +350,17 @@
               <div class="form-group"><label>BVN Retrieval (₦)</label><input type="number" id="p_bvnret" value="150"/></div>
               <div class="form-group"><label>BVN Modification (₦)</label><input type="number" id="p_bvnmod" value="500"/></div>
               <div class="form-group"><label>BVN User (₦)</label><input type="number" id="p_bvnuser" value="200"/></div>
+            </div>
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:10px;padding:1.2rem">
+            <p style="font-weight:600;margin-bottom:1rem;color:var(--dark)">🎓 JAMB Services</p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem">
+              <div class="form-group"><label>JAMB Original Result (₦)</label><input type="number" id="p_jamb_original" value="500"/></div>
+              <div class="form-group"><label>Reprint JAMB Result (₦)</label><input type="number" id="p_jamb_reprint" value="500"/></div>
+              <div class="form-group"><label>Admission Letter (₦)</label><input type="number" id="p_jamb_admission" value="1000"/></div>
+              <div class="form-group"><label>Reprint Admission Letter (₦)</label><input type="number" id="p_jamb_reprint_admission" value="1000"/></div>
+              <div class="form-group"><label>Registration Slip (₦)</label><input type="number" id="p_jamb_reg_slip" value="300"/></div>
+              <div class="form-group"><label>Profile Code Retrieval (₦)</label><input type="number" id="p_jamb_profile_code" value="200"/></div>
             </div>
           </div>
 
@@ -1259,6 +1291,13 @@
     'BVN Change of Name and Date of Birth':            ['BVN Number','New First Name','New Last Name','Middle Name','New Date of Birth'],
     'BVN Change of Name, Phone Number and Date of Birth': ['BVN Number','New First Name','New Last Name','Middle Name','New Phone Number','New Date of Birth'],
     'BVN User':                   ['BVN Number','Full Name','Phone Number'],
+    // JAMB
+    'JAMB Original Result':       ['Registration Number', 'Exam Year'],
+    'Reprint JAMB Result':        ['Registration Number', 'Exam Year'],
+    'Admission Letter':           ['Registration Number', 'Exam Year', 'School/University', 'Course/Program'],
+    'Reprint Admission Letter':   ['Registration Number', 'Exam Year', 'School/University', 'Course/Program'],
+    'Registration Slip':          ['Registration Number'],
+    'Profile Code Retrieval':     ['Phone Number'],
     // Utility
     'Buy Airtime':                ['Network','Phone','Amount'],
     'Buy Data':                   ['Network','Plan','Phone']
@@ -1391,6 +1430,25 @@
     tbody.innerHTML = util.map(t => `<tr><td>${t.id}</td><td>${t.service}</td><td>${t.details}</td><td>${fmt(t.amount)}</td><td><span class="badge badge-success">${t.status}</span></td><td>${t.date}</td></tr>`).join("");
   }
 
+  function loadJAMBStats() {
+    const allTxns = JSON.parse(localStorage.getItem("tugga_txns") || "[]");
+    const jambSvcs = ['JAMB Original Result', 'Reprint JAMB Result', 'Admission Letter', 'Reprint Admission Letter', 'Registration Slip', 'Profile Code Retrieval'];
+    const jamb = allTxns.filter(t => jambSvcs.includes(t.service));
+    document.getElementById("jambOriginalCount").textContent     = jamb.filter(t => t.service === 'JAMB Original Result').length;
+    document.getElementById("jambReprintCount").textContent       = jamb.filter(t => t.service === 'Reprint JAMB Result').length;
+    document.getElementById("jambAdmissionCount").textContent     = jamb.filter(t => t.service === 'Admission Letter').length;
+    document.getElementById("jambReprintAdmCount").textContent    = jamb.filter(t => t.service === 'Reprint Admission Letter').length;
+    document.getElementById("jambRegSlipCount").textContent       = jamb.filter(t => t.service === 'Registration Slip').length;
+    document.getElementById("jambProfileCount").textContent       = jamb.filter(t => t.service === 'Profile Code Retrieval').length;
+    const tbody = document.getElementById("jambTxnTable");
+    if (!jamb.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999">No JAMB transactions</td></tr>'; return; }
+    tbody.innerHTML = jamb.map(t => {
+      const badgeClass = t.status === 'submitted' || t.status === 'processing' ? 'pending' : t.status === 'success' ? 'success' : t.status === 'failed' ? 'failed' : 'success';
+      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'processing' ? 'Processing' : t.status === 'success' ? 'Success' : t.status === 'failed' ? 'Failed' : t.status;
+      return `<tr><td>${t.id}</td><td>${resolveUser(t.userId)}</td><td>${t.service}</td><td>${t.details || '—'}</td><td>${fmt(t.amount)}</td><td><span class="badge badge-${badgeClass}">${displayStatus}</span></td><td>${t.date}</td></tr>`;
+    }).join("");
+  }
+
   function addUser() {
     const name  = document.getElementById("nu_name").value.trim();
     const email = document.getElementById("nu_email").value.trim();
@@ -1466,7 +1524,13 @@
       delinking:    parseInt(document.getElementById("p_delinking").value) || 150,
       email_delink: parseInt(document.getElementById("p_email_delink").value) || 150,
       email_only:   parseInt(document.getElementById("p_email_only").value) || 150,
-      dob_attest:   parseInt(document.getElementById("p_dob_attest").value) || 500
+      dob_attest:   parseInt(document.getElementById("p_dob_attest").value) || 500,
+      jamb_original: parseInt(document.getElementById("p_jamb_original").value) || 500,
+      jamb_reprint:  parseInt(document.getElementById("p_jamb_reprint").value) || 500,
+      jamb_admission: parseInt(document.getElementById("p_jamb_admission").value) || 1000,
+      jamb_reprint_admission: parseInt(document.getElementById("p_jamb_reprint_admission").value) || 1000,
+      jamb_reg_slip: parseInt(document.getElementById("p_jamb_reg_slip").value) || 300,
+      jamb_profile_code: parseInt(document.getElementById("p_jamb_profile_code").value) || 200
     };
     localStorage.setItem("tugga_pricing", JSON.stringify(pricing));
     // Save to Firebase
@@ -1481,7 +1545,7 @@
 
   function loadPricingFields() {
     function applyPricing(saved) {
-      const defaults = { ninmod:500, ninpers:1000, vnin:250, ipe_normal:400, ipe_mod:400, ipe_other:400, bvnver:200, bvnret:150, bvnmod:500, bvnuser:200, nin_normal:200, nin_info:250, nin_premium:350, nin_standard:200, phone_normal:150, phone_info:200, phone_premium:300, phone_standard:150, bio_normal:300, bio_info:350, bio_premium:450, bio_standard:300, fp_normal:200, fp_info:250, fp_premium:350, fp_standard:200, no_record:150, bank_val:150, photo_err:150, sim_val:150, mod_val:150, imm_val:150, dob_mod_val:150, name_mod_val:150, phone_mod_val:150, address_mod_val:150, name_mod:500, phone_mod:500, address_mod:500, dob_mod:500, delinking:150, email_delink:150, email_only:150, dob_attest:500 };
+      const defaults = { ninmod:500, ninpers:1000, vnin:250, ipe_normal:400, ipe_mod:400, ipe_other:400, bvnver:200, bvnret:150, bvnmod:500, bvnuser:200, nin_normal:200, nin_info:250, nin_premium:350, nin_standard:200, phone_normal:150, phone_info:200, phone_premium:300, phone_standard:150, bio_normal:300, bio_info:350, bio_premium:450, bio_standard:300, fp_normal:200, fp_info:250, fp_premium:350, fp_standard:200, no_record:150, bank_val:150, photo_err:150, sim_val:150, mod_val:150, imm_val:150, dob_mod_val:150, name_mod_val:150, phone_mod_val:150, address_mod_val:150, name_mod:500, phone_mod:500, address_mod:500, dob_mod:500, delinking:150, email_delink:150, email_only:150, dob_attest:500, jamb_original:500, jamb_reprint:500, jamb_admission:1000, jamb_reprint_admission:1000, jamb_reg_slip:300, jamb_profile_code:200 };
       const p = Object.assign({}, defaults, saved);
       document.getElementById("p_ninpers").value      = p.ninpers;
       document.getElementById("p_vnin").value         = p.vnin;
@@ -1525,6 +1589,12 @@
       document.getElementById("p_email_delink").value = p.email_delink;
       document.getElementById("p_email_only").value   = p.email_only;
       document.getElementById("p_dob_attest").value   = p.dob_attest;
+      document.getElementById("p_jamb_original").value = p.jamb_original;
+      document.getElementById("p_jamb_reprint").value  = p.jamb_reprint;
+      document.getElementById("p_jamb_admission").value = p.jamb_admission;
+      document.getElementById("p_jamb_reprint_admission").value = p.jamb_reprint_admission;
+      document.getElementById("p_jamb_reg_slip").value = p.jamb_reg_slip;
+      document.getElementById("p_jamb_profile_code").value = p.jamb_profile_code;
     }
     if (window.fbReady) {
       window.fbGetDoc(window.fbDoc(window.fbDB, "settings", "pricing")).then(function(snap) {
@@ -1612,6 +1682,7 @@
     if (id === "sec-nin-admin") loadNINStats();
     if (id === "sec-bvn-admin") loadBVNStats();
     if (id === "sec-utility-admin") loadUtilityStats();
+    if (id === "sec-jamb-admin") loadJAMBStats();
     if (id === "sec-pricing") loadPricingFields();
     if (id === "sec-availability") loadAvailabilityFields();
     if (id === "sec-settings") loadSettingsFields();
@@ -1638,6 +1709,7 @@
         if (id === 'sec-nin-admin') loadNINStats();
         if (id === 'sec-bvn-admin') loadBVNStats();
         if (id === 'sec-utility-admin') loadUtilityStats();
+        if (id === 'sec-jamb-admin') loadJAMBStats();
         if (id === 'sec-overview') loadOverview();
         if (id === 'sec-transactions') loadAllTxns();
       }
@@ -1714,7 +1786,8 @@
     { label: '✅ IPE Clearance',    key: 'grp_ipe',        services: ['Normal Clearance','Modification Clearance','Other Error'] },
     { label: '🔧 Self Services',    key: 'grp_selfsvcs',   services: ['Delinking','Email Retrieval and Delinking','Email Retrieval Only','Date of Birth Attestation'] },
     { label: '🏦 BVN Services',     key: 'grp_bvn',        services: ['BVN Verification','BVN Retrieval','BVN User','BVN Change of Name','BVN Change of Date of Birth','BVN Change of Phone Number','BVN Change of Name and Date of Birth','BVN Change of Name, Phone Number and Date of Birth'] },
-    { label: '📞 Airtime & Data',   key: 'grp_utility',    services: ['Buy Airtime','Buy Data'] }
+    { label: '📞 Airtime & Data',   key: 'grp_utility',    services: ['Buy Airtime','Buy Data'] },
+    { label: '🎓 JAMB Services',    key: 'grp_jamb',       services: ['JAMB Original Result', 'Reprint JAMB Result', 'Admission Letter', 'Reprint Admission Letter', 'Registration Slip', 'Profile Code Retrieval'] }
   ];
 
   function loadAvailabilityFields() {
