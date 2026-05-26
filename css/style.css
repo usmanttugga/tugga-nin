@@ -597,6 +597,7 @@ nav .btn-logout:hover {
 }
 .badge-success { background: #d1fae5; color: #059669; }
 .badge-pending { background: #fef3c7; color: #d97706; }
+.badge-processing { background: #dbeafe; color: #2563eb; }
 .badge-failed  { background: #fee2e2; color: #dc2626; }
 
 /* ── WALLET CARD ───────────────────────────────────── */
