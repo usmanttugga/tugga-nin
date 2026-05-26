@@ -946,7 +946,7 @@
     // Apply pending-only filter
     const pendingOnly = document.getElementById('ninPendingOnly');
     if (pendingOnly && pendingOnly.checked) {
-      filtered = filtered.filter(t => t.status === 'submitted');
+      filtered = filtered.filter(t => t.status === 'submitted' || t.status === 'processing');
     }
 
     // Services that require admin validation
@@ -1272,17 +1272,18 @@
     // Update status from submitted to processing when viewed
     if (t.status === 'submitted') {
       t.status = 'processing';
-      if (window.fbReady) {
-        window.fbUpdateDoc(window.fbDoc(window.fbDB, 'transactions', txnId), { status: 'processing' });
-      }
       localStorage.setItem('tugga_txns', JSON.stringify(allTxns));
-      // Refresh active table immediately
-      const active = document.querySelector('.sidebar a.active');
-      if (active) {
-        const id = active.getAttribute('data-section');
-        if (id === 'sec-nin-admin') loadNINStats();
-        if (id === 'sec-transactions') loadAllTxns();
-        if (id === 'sec-overview') loadOverview();
+      if (window.fbReady) {
+        window.fbUpdateDoc(window.fbDoc(window.fbDB, 'transactions', txnId), { status: 'processing' })
+          .catch(function(e) { console.error('Firestore update error:', e); });
+      }
+      // Refresh active table immediately from localStorage
+      var activeSec = document.querySelector('.sidebar a.active');
+      if (activeSec) {
+        var secId = activeSec.getAttribute('data-section');
+        if (secId === 'sec-nin-admin') loadNINStats();
+        else if (secId === 'sec-transactions') loadAllTxns();
+        else if (secId === 'sec-overview') loadOverview();
       }
     }
 
