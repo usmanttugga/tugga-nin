@@ -1276,6 +1276,14 @@
         window.fbUpdateDoc(window.fbDoc(window.fbDB, 'transactions', txnId), { status: 'processing' });
       }
       localStorage.setItem('tugga_txns', JSON.stringify(allTxns));
+      // Refresh active table immediately
+      const active = document.querySelector('.sidebar a.active');
+      if (active) {
+        const id = active.getAttribute('data-section');
+        if (id === 'sec-nin-admin') loadNINStats();
+        if (id === 'sec-transactions') loadAllTxns();
+        if (id === 'sec-overview') loadOverview();
+      }
     }
 
     document.getElementById('rdTitle').textContent = t.service;
