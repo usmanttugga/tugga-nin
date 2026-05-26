@@ -84,7 +84,7 @@
         <div><p class="page-title">User Management</p><p class="page-sub">Manage registered users.</p></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <div class="search-bar" style="display:flex;gap:4px">
-            <input type="text" id="usersSearch" placeholder="Search by name or email..." autocomplete="off" oninput="filterUsers()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;min-width:200px;background:var(--white);color:var(--dark)"/>
+            <input type="text" id="usersSearch" placeholder="Search by name or email..." name="user-search" autocomplete="off" oninput="filterUsers()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;min-width:200px;background:var(--white);color:var(--dark)"/>
             <button onclick="filterUsers()" style="padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem">Search</button>
           </div>
           <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="openModal('addUserModal')">+ Add User</button>
@@ -1679,6 +1679,7 @@
   });
 
   // Initial load
+  document.getElementById('usersSearch').value = '';
   loadOverview();
   loadUsers();
 
