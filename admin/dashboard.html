@@ -650,8 +650,8 @@
     const tbody = document.getElementById("recentTxnTable");
     if (!txns.length) return;
     tbody.innerHTML = txns.slice(0, 10).map(t => {
-      const badgeClass = t.status === 'success' ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
-      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
+      const badgeClass = t.status === 'success' ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'processing' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
+      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
       return `<tr><td>${t.id}</td><td>${resolveUser(t.userId)}</td><td>${t.service}</td>
       <td>${fmt(t.amount)}</td>
       <td><span class="badge badge-${badgeClass}">${displayStatus}</span></td>
@@ -873,8 +873,8 @@
     const tbody = document.getElementById("allTxnTable");
     if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999">No transactions</td></tr>'; return; }
     tbody.innerHTML = filtered.map(t => {
-      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status;
-      const badgeClass = t.status === 'submitted' ? 'pending' : t.status === 'validated' ? 'success' : t.status === 'success' ? 'success' : t.status === 'failed' ? 'failed' : 'pending';
+      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status;
+      const badgeClass = t.status === 'submitted' || t.status === 'processing' ? 'pending' : t.status === 'validated' ? 'success' : t.status === 'success' ? 'success' : t.status === 'failed' ? 'failed' : 'pending';
       const viewBtn = `<button onclick="openRequestDetails('${t.id}')" style="background:var(--accent);color:var(--primary);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600">👁 View</button>`;
       return `<tr>
         <td style="font-size:0.75rem">${t.id}</td>
@@ -956,13 +956,13 @@
     if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999">No requests found.</td></tr>'; return; }
     tbody.innerHTML = filtered.map(t => {
       const alreadyValidated = t.status === 'validated' || t.status === 'cleared' || t.status === 'modified' || t.status === 'personalized' || t.status === 'delinked' || t.status === 'retrieved';
-      const needsValidation = validateSvcs.includes(t.service) && t.status === 'submitted';
+      const needsValidation = validateSvcs.includes(t.service) && (t.status === 'submitted' || t.status === 'processing');
       const isIPE = IPE_SVCS.includes(t.service);
       const isMod = MOD_SVCS.includes(t.service);
       const isPerson = PERSON_SVCS.includes(t.service);
       const isSelf = SELF_SVCS.includes(t.service);
-      const badgeClass = alreadyValidated ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
-      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
+      const badgeClass = alreadyValidated ? 'success' : t.status === 'submitted' || t.status === 'processing' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
+      const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'cleared' ? 'Cleared' : t.status === 'modified' ? 'Modified' : t.status === 'personalized' ? 'Personalized' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status === 'failed' ? 'Failed' : t.status === 'success' ? 'Success' : t.status;
       const viewBtn = `<button onclick="openRequestDetails('${t.id}')" style="background:var(--accent);color:var(--primary);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;white-space:nowrap">👁 View</button>`;
       const selfActionBtn = t.service === 'Delinking'
         ? `<button onclick="openDelinkModal('${t.id}')" style="background:#059669;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;white-space:nowrap;margin-top:4px">🔗 Delink</button>`
@@ -971,7 +971,8 @@
           : t.service === 'Email Retrieval Only'
             ? `<button onclick="openEmailOnlyModal('${t.id}')" style="background:#2563eb;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;white-space:nowrap;margin-top:4px">📩 Retrieve</button>`
             : `<button onclick="validateNINRequest('${t.id}')" style="background:var(--primary);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;white-space:nowrap;margin-top:4px">✔ Validate</button>`;
-      const actionBtn = isSelf && t.status === 'submitted'
+      const isActionable = t.status === 'submitted' || t.status === 'processing';
+      const actionBtn = isSelf && isActionable
         ? selfActionBtn + `<button onclick="openFailModal('${t.id}')" style="background:#e53e3e;color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;white-space:nowrap;margin-top:4px">❌ Failed</button>`
         : needsValidation
           ? isIPE
@@ -1268,10 +1269,19 @@
     const t = allTxns.find(x => x.id === txnId);
     if (!t) { toast('Request not found', 'error'); return; }
 
+    // Update status from submitted to processing when viewed
+    if (t.status === 'submitted') {
+      t.status = 'processing';
+      if (window.fbReady) {
+        window.fbUpdateDoc(window.fbDoc(window.fbDB, 'transactions', txnId), { status: 'processing' });
+      }
+      localStorage.setItem('tugga_txns', JSON.stringify(allTxns));
+    }
+
     document.getElementById('rdTitle').textContent = t.service;
 
-    const badgeClass = t.status === 'validated' ? 'success' : t.status === 'submitted' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
-    const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status;
+    const badgeClass = t.status === 'validated' ? 'success' : t.status === 'submitted' || t.status === 'processing' ? 'pending' : t.status === 'failed' ? 'failed' : 'success';
+    const displayStatus = t.status === 'submitted' ? 'Pending' : t.status === 'processing' ? 'Processing' : t.status === 'validated' ? 'Validated' : t.status === 'success' ? 'Success' : t.status === 'delinked' ? 'Delinked' : t.status === 'retrieved' ? 'Retrieved' : t.status;
     document.getElementById('rdMeta').innerHTML =
       `<span>Ref: <strong>${t.id}</strong></span>` +
       `<span>User: <strong>${resolveUser(t.userId) || '—'}</strong></span>` +
@@ -1307,7 +1317,7 @@
     const isMod = MOD_SVCS.includes(t.service);
     const isPerson = PERSON_SVCS.includes(t.service);
     const isSelf = SELF_SVCS.includes(t.service);
-    const canAct = t.status === 'submitted';
+    const canAct = t.status === 'submitted' || t.status === 'processing';
 
     // Show retrieved email/NIN for completed self-service requests
     if (t.retrievedEmail) allData['Retrieved Email'] = t.retrievedEmail;
