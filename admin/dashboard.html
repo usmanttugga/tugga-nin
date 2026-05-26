@@ -44,8 +44,8 @@
       <h4>Services</h4>
       <a href="#" data-section="sec-nin-admin" onclick="showSection('sec-nin-admin')"><span class="icon">🪪</span> NIN Services</a>
       <a href="#" data-section="sec-bvn-admin" onclick="showSection('sec-bvn-admin')"><span class="icon">🏦</span> BVN Services</a>
-      <a href="#" data-section="sec-utility-admin" onclick="showSection('sec-utility-admin')"><span class="icon">📞</span> Airtime & Data</a>
       <a href="#" data-section="sec-jamb-admin" onclick="showSection('sec-jamb-admin')"><span class="icon">🎓</span> JAMB Services</a>
+      <a href="#" data-section="sec-utility-admin" onclick="showSection('sec-utility-admin')"><span class="icon">📞</span> Airtime & Data</a>
     </div>
     <div class="menu-section">
       <h4>Settings</h4>
@@ -190,23 +190,6 @@
       </div>
     </section>
 
-    <!-- UTILITY ADMIN -->
-    <section id="sec-utility-admin" class="content-section section-hidden">
-      <p class="page-title">Airtime & Data Management</p>
-      <p class="page-sub">Monitor airtime and data purchases.</p>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon bg-blue">📞</div><div class="stat-info"><h3 id="airtimeCount">0</h3><p>Airtime Purchases</p></div></div>
-        <div class="stat-card"><div class="stat-icon bg-green">📶</div><div class="stat-info"><h3 id="dataCount">0</h3><p>Data Purchases</p></div></div>
-        <div class="stat-card"><div class="stat-icon bg-orange">💰</div><div class="stat-info"><h3 id="utilityRevenue">₦0</h3><p>Utility Revenue</p></div></div>
-      </div>
-      <div class="table-wrap" style="margin-top:1rem">
-        <table>
-          <thead><tr><th>Ref</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody id="utilityTxnTable"><tr><td colspan="6" style="text-align:center;color:#999">No utility transactions</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-
     <!-- JAMB ADMIN -->
     <section id="sec-jamb-admin" class="content-section section-hidden">
       <p class="page-title">JAMB Services Management</p>
@@ -223,6 +206,23 @@
         <table>
           <thead><tr><th>Ref</th><th>User</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
           <tbody id="jambTxnTable"><tr><td colspan="7" style="text-align:center;color:#999">No JAMB transactions</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- UTILITY ADMIN -->
+    <section id="sec-utility-admin" class="content-section section-hidden">
+      <p class="page-title">Airtime & Data Management</p>
+      <p class="page-sub">Monitor airtime and data purchases.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon bg-blue">📞</div><div class="stat-info"><h3 id="airtimeCount">0</h3><p>Airtime Purchases</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-green">📶</div><div class="stat-info"><h3 id="dataCount">0</h3><p>Data Purchases</p></div></div>
+        <div class="stat-card"><div class="stat-icon bg-orange">💰</div><div class="stat-info"><h3 id="utilityRevenue">₦0</h3><p>Utility Revenue</p></div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:1rem">
+        <table>
+          <thead><tr><th>Ref</th><th>Service</th><th>Details</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="utilityTxnTable"><tr><td colspan="6" style="text-align:center;color:#999">No utility transactions</td></tr></tbody>
         </table>
       </div>
     </section>
