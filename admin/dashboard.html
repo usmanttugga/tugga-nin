@@ -82,7 +82,13 @@
     <section id="sec-users" class="content-section section-hidden">
       <div class="admin-header">
         <div><p class="page-title">User Management</p><p class="page-sub">Manage registered users.</p></div>
-        <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="openModal('addUserModal')">+ Add User</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="search-bar" style="display:flex;gap:4px">
+            <input type="text" id="usersSearch" placeholder="Search by name or email..." oninput="filterUsers()" style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.85rem;min-width:200px;background:var(--white);color:var(--dark)"/>
+            <button onclick="filterUsers()" style="padding:8px 14px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem">Search</button>
+          </div>
+          <button class="btn-primary" style="width:auto;padding:10px 20px" onclick="openModal('addUserModal')">+ Add User</button>
+        </div>
       </div>
       <!-- VA Requests -->
       <div id="vaRequestsBox" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem;margin-bottom:1.5rem">
@@ -655,9 +661,20 @@
 
   let _usersPage = 1;
   const _usersPerPage = 20;
+  let _usersSearch = '';
+
+  function getFilteredUsers() {
+    const all = (window._fbUsers || MOCK_USERS).filter(u => u.role !== 'admin');
+    if (!_usersSearch) return all;
+    const q = _usersSearch.toLowerCase();
+    return all.filter(u =>
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q))
+    );
+  }
 
   function loadUsers() {
-    const users = (window._fbUsers || MOCK_USERS).filter(u => u.role !== 'admin');
+    const users = getFilteredUsers();
     document.getElementById("statUsers").textContent = users.length;
     const totalPages = Math.max(1, Math.ceil(users.length / _usersPerPage));
     if (_usersPage > totalPages) _usersPage = totalPages;
@@ -707,8 +724,14 @@
     }
   }
 
+  function filterUsers() {
+    _usersSearch = document.getElementById('usersSearch').value;
+    _usersPage = 1;
+    loadUsers();
+  }
+
   function usersChangePage(dir) {
-    const users = (window._fbUsers || MOCK_USERS).filter(u => u.role !== 'admin');
+    const users = getFilteredUsers();
     const totalPages = Math.max(1, Math.ceil(users.length / _usersPerPage));
     _usersPage = Math.max(1, Math.min(_usersPage + dir, totalPages));
     loadUsers();
