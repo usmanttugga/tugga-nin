@@ -3268,45 +3268,22 @@
       document.getElementById('bm_new_dob_err').textContent = '';
     }
 
-    // Handle file uploads
-    const uploadFile = (inputId, prefix) => new Promise(function(resolve) {
+    // Capture file names (uploads require Firebase Storage setup — just track filenames for now)
+    const getFileName = function(inputId) {
       const input = document.getElementById(inputId);
-      if (!input || !input.files || !input.files[0]) { resolve(null); return; }
-      const file = input.files[0];
-      const filePath = 'uploads/' + (user?.email || 'unknown') + '/' + prefix + '_' + Date.now() + '_' + file.name;
-      if (window.fbReady && window.fbStorage) {
-        const storageRef = window.fbStorageRef(window.fbStorage, filePath);
-        window.fbUploadBytes(storageRef, file).then(function(snapshot) {
-          return window.fbGetDownloadURL(snapshot.ref);
-        }).then(function(url) {
-          resolve(url);
-        }).catch(function() { resolve(null); });
-      } else {
-        resolve(null);
-      }
-    });
+      return (input && input.files && input.files[0]) ? input.files[0].name : null;
+    };
+    var fn = getFileName('bm_affidavit');
+    if (fn) formData['Affidavit File'] = fn;
+    fn = getFileName('bm_nin_slip');
+    if (fn) formData['NIN Slip File'] = fn;
 
-    Promise.all([
-      uploadFile('bm_affidavit', 'affidavit'),
-      uploadFile('bm_nin_slip', 'ninslip')
-    ]).then(function(urls) {
-      if (urls[0]) formData['Affidavit URL'] = urls[0];
-      if (urls[1]) formData['NIN Slip URL'] = urls[1];
-
-      walletBalance -= fee;
-      submitWithStatus(cfg.title, bvn, fee, 'submitted', formData);
-      updateStats();
-      syncWalletToFirebase();
-      closeModal('bvnModModal');
-      toast(cfg.title + ' request submitted successfully!');
-    }).catch(function() {
-      walletBalance -= fee;
-      submitWithStatus(cfg.title, bvn, fee, 'submitted', formData);
-      updateStats();
-      syncWalletToFirebase();
-      closeModal('bvnModModal');
-      toast(cfg.title + ' request submitted successfully!');
-    });
+    walletBalance -= fee;
+    submitWithStatus(cfg.title, bvn, fee, 'submitted', formData);
+    updateStats();
+    syncWalletToFirebase();
+    closeModal('bvnModModal');
+    toast(cfg.title + ' request submitted successfully!');
   }
 
   // ── Airtime ────────────────────────────────────────
