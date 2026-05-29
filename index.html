@@ -375,7 +375,7 @@
       let tries = 0;
       const t = setInterval(() => {
         if (window._fbReady) { clearInterval(t); resolve(); }
-        else if (++tries > 50) { clearInterval(t); reject(new Error("Firebase failed to load.")); }
+        else if (++tries > 200) { clearInterval(t); reject(new Error("Firebase failed to load.")); }
       }, 100);
     });
   }
