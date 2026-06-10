@@ -108,7 +108,7 @@
       <p class="page-sub">Fund your wallet to access all services.</p>
       <div class="wallet-card">
         <div><h4>Available Balance</h4><div class="balance" id="walletBal">₦0.00</div></div>
-        <button class="btn-fund" onclick="openModal('fundModal')">+ Fund Wallet</button>
+        <button class="btn-fund" onclick="openModal('fundModal')">Contact Admin to Fund</button>
       </div>
 
       <!-- No virtual account section -->
@@ -1244,26 +1244,17 @@
 <div class="modal-overlay" id="fundModal">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <h3>💰 Fund Wallet</h3>
+      <h3>💰 Wallet Funding</h3>
       <button class="modal-close" onclick="closeModal('fundModal')">✕</button>
     </div>
     <div id="fundAlert"></div>
-
-    <!-- Amount input -->
-    <div class="form-group">
-      <label>Amount (₦)</label>
-      <input type="number" id="fundAmount" placeholder="Minimum ₦100" min="100"/>
-    </div>
-
-    <!-- Card payment only -->
-    <div id="fundPanelCard">
-      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1rem">Pay securely via card, USSD, or bank transfer through Paystack.</p>
-      <button class="btn-primary" onclick="payWithPaystack()">Pay with Paystack</button>
+    <div style="text-align:center;padding:2rem 0">
+      <p style="font-size:1.1rem;margin-bottom:1rem">Self payment is not available.</p>
+      <p style="font-size:1rem;color:var(--gray);margin-bottom:1.5rem">Contact admin at <strong style="font-size:1.3rem;color:var(--accent)">09031881061</strong> for wallet funding.</p>
+      <button class="btn-primary" style="width:auto;padding:10px 24px" onclick="closeModal('fundModal')">OK</button>
     </div>
   </div>
 </div>
-
-<script src="https://js.paystack.co/v1/inline.js"></script>
 <script src="../js/app.js?v=8"></script>
 <script type="module" src="../js/firebase.js"></script>
 <script>
@@ -1323,16 +1314,6 @@
             return;
           }
           walletBalance = data.wallet || 0;
-          // Show virtual account if assigned
-          if (data.virtualAccount) {
-            const va = data.virtualAccount;
-            document.getElementById('walletVAContent').style.display = 'none';
-            const det = document.getElementById('walletVADetails');
-            det.style.display = 'flex';
-            document.getElementById('walletVABank').textContent   = va.bank || '';
-            document.getElementById('walletVANumber').textContent = va.account_number || '';
-            document.getElementById('walletVAName').textContent   = va.account_name || user.name;
-          }
           updateStats();
         }
       });
@@ -3020,152 +3001,8 @@
     toast('FingerPrint Verification request submitted successfully!');
   }
 
-  function switchFundTab(tab) {
-    document.getElementById('fundPanelCard').style.display = tab === 'card' ? 'block' : 'none';
-    document.getElementById('fundPanelBank').style.display = tab === 'bank' ? 'block' : 'none';
-    document.getElementById('tabCard').style.background = tab === 'card' ? 'var(--primary)' : '#fff';
-    document.getElementById('tabCard').style.color = tab === 'card' ? '#fff' : 'var(--gray)';
-    document.getElementById('tabCard').style.borderColor = tab === 'card' ? 'var(--primary)' : '#e2e8f0';
-    document.getElementById('tabBank').style.background = tab === 'bank' ? 'var(--primary)' : '#fff';
-    document.getElementById('tabBank').style.color = tab === 'bank' ? '#fff' : 'var(--gray)';
-    document.getElementById('tabBank').style.borderColor = tab === 'bank' ? 'var(--primary)' : '#e2e8f0';
-    if (tab === 'bank') loadVirtualAccount();
-  }
-
-  function generateVirtualAccount() {
-    const btn = document.getElementById('btnGenerateVA');
-    const alertEl = document.getElementById('vaGenAlert');
-    btn.disabled = true;
-    btn.textContent = 'Creating...';
-    alertEl.innerHTML = '';
-
-    if (!window.fbReady) {
-      alertEl.innerHTML = '<div class="alert alert-error">Firebase not ready. Please try again.</div>';
-      btn.disabled = false;
-      btn.textContent = '🏦 Request Virtual Account';
-      return;
-    }
-
-    // Check if user already has a DVA
-    window.fbGetDoc(window.fbDoc(window.fbDB, 'users', user.uid || user.id)).then(function(snap) {
-      if (snap.exists() && snap.data().virtualAccount) {
-        const va = snap.data().virtualAccount;
-        showVirtualAccountCard(va);
-        btn.textContent = '✅ Account Ready';
-        return;
-      }
-      // Create Paystack DVA via API
-      createPaystackDVA();
-    }).catch(function() {
-      createPaystackDVA();
-    });
-  }
-
-  function createPaystackDVA() {
-    const btn = document.getElementById('btnGenerateVA');
-    const alertEl = document.getElementById('vaGenAlert');
-    const uid = user.uid || user.id;
-
-    // Save DVA request to Firestore — admin processes via Paystack dashboard
-    window.fbSetDoc(window.fbDoc(window.fbDB, 'va_requests', uid), {
-      userId: uid,
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-      requestedAt: new Date().toISOString(),
-      status: 'pending'
-    }).then(function() {
-      alertEl.innerHTML = '<div class="alert alert-success">✅ Request submitted! Your dedicated account will be ready within minutes.</div>';
-      btn.textContent = '⏳ Request Submitted';
-    }).catch(function(e) {
-      alertEl.innerHTML = '<div class="alert alert-error">Failed: ' + e.message + '</div>';
-      btn.disabled = false;
-      btn.textContent = '🏦 Request Virtual Account';
-    });
-  }
-
-  function showVirtualAccountCard(va) {
-    const content = document.getElementById('walletVAContent');
-    const details = document.getElementById('walletVADetails');
-    if (content) content.style.display = 'none';
-    if (details) {
-      details.style.display = 'flex';
-      document.getElementById('walletVABank').textContent   = va.bank || '—';
-      document.getElementById('walletVANumber').textContent = va.account_number || '—';
-      document.getElementById('walletVAName').textContent   = va.account_name || user.name;
-    }
-  }
-
-  function loadVirtualAccount() {
-    const vaDetails = document.getElementById('vaDetails');
-    const vaLoading = document.getElementById('vaLoading');
-    const vaError   = document.getElementById('vaError');
-    if (!window.fbReady) { vaLoading.textContent = 'Loading...'; return; }
-    window.fbGetDoc(window.fbDoc(window.fbDB, 'users', user.uid || user.id)).then(function(snap) {
-      if (snap.exists() && snap.data().virtualAccount) {
-        const va = snap.data().virtualAccount;
-        document.getElementById('vaBank').textContent   = va.bank || 'Wema Bank';
-        document.getElementById('vaNumber').textContent = va.account_number || '—';
-        document.getElementById('vaName').textContent   = va.account_name || user.name;
-        vaLoading.style.display = 'none';
-        vaDetails.style.display = 'block';
-        // Also update the wallet card VA display
-        showVirtualAccountCard(va);
-      } else {
-        vaLoading.style.display = 'none';
-        vaError.style.display = 'block';
-        vaError.textContent = 'No virtual account yet. Click "Request Virtual Account" to get one instantly.';
-      }
-    }).catch(function() {
-      vaLoading.textContent = 'Could not load account details.';
-    });
-  }
-
-  function payWithPaystack() {
-    const amt = parseInt(document.getElementById('fundAmount').value);
-    if (!amt || amt < 100) { document.getElementById('fundAlert').innerHTML = '<div class="alert alert-error">Minimum amount is ₦100.</div>'; return; }
-    document.getElementById('fundAlert').innerHTML = '';
-    // Check if Paystack SDK is loaded
-    if (typeof PaystackPop === 'undefined') {
-      document.getElementById('fundAlert').innerHTML = '<div class="alert alert-error">Payment SDK not loaded. Please check your internet connection.</div>';
-      return;
-    }
-    const handler = PaystackPop.setup({
-      key: 'pk_live_ff5adc037d857a85d80e874f8cb69b60eb59f2fb',
-      email: user.email,
-      amount: amt * 100, // Paystack uses kobo
-      currency: 'NGN',
-      ref: 'TXN' + Date.now(),
-      metadata: { userId: user.id || user.uid, name: user.name },
-      callback: function(response) {
-        // Payment successful — credit wallet
-        walletBalance += amt;
-        addTransaction(user.email, 'Wallet Funding', 'Paystack Ref: ' + response.reference, amt);
-        syncWalletToFirebase();
-        closeModal('fundModal');
-        toast('Wallet funded with ' + fmt(amt) + ' via Paystack!');
-        updateStats();
-      },
-      onClose: function() {
-        toast('Payment cancelled.', 'error');
-      }
-    });
-    handler.openIframe();
-  }
-
-  function confirmBankTransfer() {
-    const amt = parseInt(document.getElementById('fundAmount').value);
-    if (!amt || amt < 100) { document.getElementById('fundAlert').innerHTML = '<div class="alert alert-error">Please enter the amount you transferred.</div>'; return; }
-    // In production, this would be verified via webhook. For now, show pending message.
-    document.getElementById('fundAlert').innerHTML = '<div class="alert alert-info">Transfer recorded. Your wallet will be credited once payment is confirmed (usually within minutes).</div>';
-    // Record a pending funding transaction
-    addTransaction(user.id, 'Wallet Funding', 'Bank Transfer – Pending Confirmation', amt);
-    updateStats();
-  }
-
   function fundWallet() {
-    // Legacy fallback — kept for compatibility
-    payWithPaystack();
+    openModal('fundModal');
   }
 
   // ── BVN Modification ──────────────────────────────
