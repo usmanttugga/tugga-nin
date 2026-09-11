@@ -9,6 +9,9 @@
   <!-- v2 -->
   <title>User Dashboard – MAJIA DIGITAL IDENTITY</title>
   <link rel="stylesheet" href="../css/style.css"/>
+  <!-- NIN Slip Converter dependencies (browser-side only, no data saved) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -52,6 +55,7 @@
       <a href="#" data-section="sec-vnin" onclick="showSection('sec-vnin')"><span class="icon">📱</span> VNIN Slip</a>
       <a href="#" data-section="sec-nin-person" onclick="showSection('sec-nin-person')"><span class="icon">🎨</span> NIN Personalization</a>
       <a href="#" data-section="sec-selfservices" onclick="showSection('sec-selfservices')"><span class="icon">🔧</span> Self Services</a>
+      <a href="#" data-section="sec-nin-converter" onclick="showSection('sec-nin-converter')"><span class="icon">🖨️</span> NIN Slip Converter</a>
     </div>
     <div class="menu-section">
       <h4>BVN Services</h4>
@@ -70,6 +74,7 @@
 
   <!-- MAIN -->
   <main class="main">
+    <div id="globalSyncAlert"></div>
 
     <!-- HOME -->
     <section id="sec-home" class="content-section">
@@ -93,6 +98,7 @@
         <div class="service-card" data-svc="VNIN Slip" onclick="showSection('sec-vnin')"><div class="svc-icon">📱</div><h4>VNIN Slip</h4><p>Get virtual NIN slip</p></div>
         <div class="service-card" onclick="showSection('sec-ipe')"><div class="svc-icon">✅</div><h4>IPE Clearance</h4><p>Identity pre-enrollment</p></div>
         <div class="service-card" onclick="showSection('sec-selfservices')"><div class="svc-icon">🔧</div><h4>Self Services</h4><p>Delinking & Email services</p></div>
+        <div class="service-card" onclick="showSection('sec-nin-converter')"><div class="svc-icon">🖨️</div><h4>NIN Slip Converter</h4><p>4-per-A4 printable layout</p></div>
         <div class="service-card" data-svc="BVN Verification" onclick="showSection('sec-bvn')"><div class="svc-icon">🏦</div><h4>BVN Verification</h4><p>Verify BVN details</p><div class="price">₦200</div></div>
         <div class="service-card" data-svc="BVN Retrieval" onclick="showSection('sec-bvn')"><div class="svc-icon">🔍</div><h4>BVN Retrieval</h4><p>Retrieve your BVN</p><div class="price">₦150</div></div>
         <div class="service-card" data-svc="BVN Modification" onclick="showSection('sec-bvn')"><div class="svc-icon">🔧</div><h4>BVN Modification</h4><p>Update BVN records</p><div class="price">₦500</div></div>
@@ -408,6 +414,81 @@
         <button class="btn-primary" onclick="buyData()">Buy Data</button>
       </div>
       <div id="svcHistory-sec-data"></div>
+    </section>
+
+    <!-- NIN SLIP CONVERTER -->
+    <section id="sec-nin-converter" class="content-section section-hidden">
+      <p class="page-title">NIN Slip Converter</p>
+      <p class="page-sub">Convert multiple portable NIN slip PDFs into a 4-per-A4 printable layout — all processing happens in your browser, nothing is uploaded or saved.</p>
+
+      <div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start">
+
+        <!-- Tool Card -->
+        <div style="background:var(--white);border-radius:16px;padding:2rem;max-width:500px;flex:1 1 340px;box-shadow:var(--card-shadow)">
+          <div style="text-align:center;margin-bottom:1.5rem">
+            <div style="font-size:2.5rem;margin-bottom:0.5rem">🖨️</div>
+            <h3 style="margin:0;font-size:1.1rem;color:var(--dark)">4-per-A4 Layout Generator</h3>
+            <p style="margin:0.4rem 0 0;font-size:0.85rem;color:var(--gray)">Select multiple NIN slip PDFs — up to any number</p>
+          </div>
+
+          <!-- Drop Zone -->
+          <label id="ninConverterDropZone" for="ninConverterInput" style="
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            padding:2rem 1rem;border:2px dashed #cbd5e1;border-radius:12px;
+            background:#f8fafc;cursor:pointer;transition:all 0.25s;margin-bottom:1rem;
+            text-align:center;gap:0.5rem
+          " onmouseover="this.style.borderColor='var(--primary)';this.style.background='#eff6ff'"
+             onmouseout="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc'">
+            <span style="font-size:2.2rem">📄</span>
+            <span style="font-weight:600;color:var(--primary);font-size:0.95rem">Choose Portable NIN Slips</span>
+            <span style="font-size:0.82rem;color:#94a3b8">Select multiple PDFs for your users</span>
+            <input type="file" id="ninConverterInput" multiple accept="application/pdf"
+              style="display:none" onchange="ninConverterUpdateList(this)"/>
+          </label>
+
+          <!-- File List -->
+          <div id="ninConverterFileList" style="
+            display:none;font-size:0.85rem;color:#475569;max-height:150px;overflow-y:auto;
+            background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;
+            padding:0.25rem 0.75rem;margin-bottom:1rem
+          "></div>
+
+          <!-- Progress -->
+          <div id="ninConverterProgress" style="display:none;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--gray);margin-bottom:0.3rem">
+              <span id="ninConverterProgressLabel">Processing…</span>
+              <span id="ninConverterProgressPct">0%</span>
+            </div>
+            <div style="background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+              <div id="ninConverterProgressBar" style="height:100%;background:var(--primary);width:0%;transition:width 0.3s;border-radius:99px"></div>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <button class="btn-primary" onclick="ninConverterGenerate()" id="ninConverterBtn">
+            Generate A4 PDF
+          </button>
+          <button class="btn-primary" onclick="ninConverterClear()"
+            style="background:#ef4444;margin-top:0.75rem">
+            Clear Selection
+          </button>
+        </div>
+
+        <!-- How it works -->
+        <div style="background:var(--white);border-radius:16px;padding:2rem;max-width:320px;flex:1 1 260px;box-shadow:var(--card-shadow)">
+          <h4 style="margin:0 0 1rem;color:var(--dark);font-size:0.95rem">How it works</h4>
+          <ol style="padding-left:1.2rem;margin:0;display:flex;flex-direction:column;gap:0.75rem;font-size:0.88rem;color:#475569;line-height:1.5">
+            <li>Download the portable NIN slips from the NIMC self-service portal as PDF files.</li>
+            <li>Click <strong>Choose Portable NIN Slips</strong> and select all the PDFs you want to combine.</li>
+            <li>Click <strong>Generate A4 PDF</strong> — four slips are arranged per A4 page automatically.</li>
+            <li>The file downloads instantly to your device. <strong>No data is uploaded or saved anywhere.</strong></li>
+          </ol>
+          <div style="margin-top:1.25rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:0.75rem 1rem;font-size:0.82rem;color:#166534">
+            🔒 <strong>Private by design</strong> — all PDF processing happens entirely inside your browser.
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- JAMB SERVICES -->
@@ -1254,9 +1335,64 @@
   </div>
 </div>
 <script src="../js/app.js?v=8"></script>
-<script type="module" src="../js/firebase.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, onSnapshot,
+  collection, addDoc, getDocs, query, where, updateDoc, increment, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDX31m2k1OOzedDQHAbpvgP15mxLjBRdwc",
+  authDomain: "tugga-nin.firebaseapp.com",
+  projectId: "tugga-nin",
+  storageBucket: "tugga-nin.firebasestorage.app",
+  messagingSenderId: "63922868228",
+  appId: "1:63922868228:web:45bfadf123e9b493b82551"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.fbAuth = auth;
+window.fbDB = db;
+window.fbStorage = storage;
+window.fbStorageRef = ref;
+window.fbUploadBytes = uploadBytes;
+window.fbGetDownloadURL = getDownloadURL;
+window.fbDoc = doc;
+window.fbSetDoc = setDoc;
+window.fbGetDoc = getDoc;
+window.fbOnSnapshot = onSnapshot;
+window.fbCollection = collection;
+window.fbAddDoc = addDoc;
+window.fbGetDocs = getDocs;
+window.fbQuery = query;
+window.fbWhere = where;
+window.fbUpdateDoc = updateDoc;
+window.fbIncrement = increment;
+window.fbDeleteDoc = deleteDoc;
+window.fbCreateUser = createUserWithEmailAndPassword;
+window.fbSignIn = signInWithEmailAndPassword;
+window.fbSignOut = signOut;
+window.fbOnAuthStateChanged = onAuthStateChanged;
+window.fbResetPassword = sendPasswordResetEmail;
+window.fbReady = true;
+
+console.log("✅ Firebase ready (inline)");
+</script>
 <script>
-  const user = requireAuth("user");
+  const localStorage = window.safeStorage || window.localStorage;
+  let user = requireAuth("user");
   let walletBalance = user ? (parseFloat(user.wallet) || 0) : 0;
   let currentService = {};
 
@@ -1264,45 +1400,154 @@
   if (user) window._currentUserEmail = user.email;
 
   if (user) {
-    document.getElementById("userName").textContent = user.name;
-    document.getElementById("greetName").textContent = user.name.split(" ")[0];
-    document.getElementById("userAvatar").textContent = user.name[0].toUpperCase();
+    const displayName = user.name || user.email || "User";
+    document.getElementById("userName").textContent = displayName;
+    document.getElementById("greetName").textContent = displayName.split(" ")[0];
+    document.getElementById("userAvatar").textContent = displayName[0] ? displayName[0].toUpperCase() : "U";
     updateStats();
   }
 
+  var _fbSyncInitialized = false;
+
   // ── Firebase real-time sync ────────────────────────
+  function showSyncError(component, error) {
+    const container = document.getElementById("globalSyncAlert");
+    if (container) {
+      let alertEl = document.getElementById("sync-alert-" + component.replace(/\s+/g, ''));
+      if (!alertEl) {
+        alertEl = document.createElement("div");
+        alertEl.id = "sync-alert-" + component.replace(/\s+/g, '');
+        alertEl.className = "alert alert-error";
+        alertEl.style.marginBottom = "1rem";
+        container.appendChild(alertEl);
+      }
+      alertEl.innerHTML = `<strong>⚠️ Firebase Sync Error (${component}):</strong> ${error.message || error} (Code: ${error.code || 'unknown'})`;
+    }
+  }
+
+  function clearSyncError(component) {
+    const alertEl = document.getElementById("sync-alert-" + component.replace(/\s+/g, ''));
+    if (alertEl) {
+      alertEl.remove();
+    }
+  }
+
+  window.addEventListener('error', function(e) {
+    showSyncError("JavaScript Error", e.error || e.message);
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    showSyncError("Unhandled Rejection", e.reason ? (e.reason.message || e.reason) : e);
+  });
+
   function initFirebaseSync() {
     if (!window.fbReady) { setTimeout(initFirebaseSync, 300); return; }
 
+    window.fbOnAuthStateChanged(window.fbAuth, function(firebaseUser) {
+      if (firebaseUser) {
+        // Fetch user document from Firestore to verify role
+        window.fbGetDoc(window.fbDoc(window.fbDB, "users", firebaseUser.uid)).then(function(snap) {
+          if (snap.exists()) {
+            const userData = snap.data();
+            if (userData.role === 'user') {
+              // Valid user! Reconstruct localStorage session
+              user = Object.assign({}, userData, { uid: firebaseUser.uid });
+              walletBalance = parseFloat(user.wallet) || 0;
+              window._currentUserEmail = user.email;
+              localStorage.setItem('tugga_user', JSON.stringify(user));
+              
+              // Update DOM elements dynamically
+              const displayName = userData.name || userData.email || "User";
+              if (document.getElementById("userName")) {
+                document.getElementById("userName").textContent = displayName;
+              }
+              if (document.getElementById("greetName")) {
+                document.getElementById("greetName").textContent = displayName.split(" ")[0];
+              }
+              if (document.getElementById("userAvatar")) {
+                document.getElementById("userAvatar").textContent = displayName[0] ? displayName[0].toUpperCase() : "U";
+              }
+
+              if (_fbSyncInitialized) return;
+              _fbSyncInitialized = true;
+              startSyncListeners();
+            } else {
+              console.warn("Unauthorized role:", userData.role);
+              window.location.href = "../index.html";
+            }
+          } else {
+            console.warn("User document not found for UID:", firebaseUser.uid);
+            window.location.href = "../index.html";
+          }
+        }).catch(function(err) {
+          console.error("Failed to verify user doc dynamically:", err);
+          // Fallback: If network failed or permission was blocked, but we already have a user cached, let them stay
+          const localUser = JSON.parse(localStorage.getItem('tugga_user') || 'null');
+          if (localUser && localUser.role === 'user') {
+            user = localUser;
+            walletBalance = parseFloat(user.wallet) || 0;
+            window._currentUserEmail = user.email;
+            if (_fbSyncInitialized) return;
+            _fbSyncInitialized = true;
+            startSyncListeners();
+          } else {
+            window.location.href = "../index.html";
+          }
+        });
+      } else {
+        console.warn("No active Firebase Auth session. Redirecting to login...");
+        window.location.href = "../index.html";
+      }
+    });
+  }
+
+  function startSyncListeners() {
     // Pricing real-time
     window.fbOnSnapshot(window.fbDoc(window.fbDB, "settings", "pricing"), function(snap) {
+      clearSyncError("Pricing");
       if (snap.exists()) {
         localStorage.setItem('tugga_pricing', JSON.stringify(snap.data()));
         refreshPricing();
       }
+    }, function(error) {
+      console.error("Pricing snapshot error:", error);
+      showSyncError("Pricing", error);
     });
 
     // Availability real-time
     window.fbOnSnapshot(window.fbDoc(window.fbDB, "settings", "availability"), function(snap) {
+      clearSyncError("Availability");
       if (snap.exists()) {
         localStorage.setItem('tugga_availability', JSON.stringify(snap.data()));
         applyAvailability();
       }
+    }, function(error) {
+      console.error("Availability snapshot error:", error);
+      showSyncError("Availability", error);
     });
 
     // Transactions real-time
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "transactions"), function(snap) {
-      const txns = snap.docs.map(d => d.data()).sort((a,b) => b.id > a.id ? 1 : -1);
-      localStorage.setItem('tugga_txns', JSON.stringify(txns));
+      clearSyncError("Transactions");
+      const txns = snap.docs.map(d => d.data()).sort((a, b) => {
+        const idA = String(a.id || '');
+        const idB = String(b.id || '');
+        return idB.localeCompare(idA);
+      });
+      localStorage.setItem('tugga_txns', JSON.stringify(txns.slice(0, 100)));
       transactions = txns;
       updateStats();
       renderHistory();
       renderAllServiceHistories();
+    }, function(error) {
+      console.error("Transactions snapshot error:", error);
+      showSyncError("Transactions", error);
     });
 
     // User wallet real-time + suspension check
-    if (user && (user.uid || user.id)) {
-      window.fbOnSnapshot(window.fbDoc(window.fbDB, "users", user.uid || user.id), function(snap) {
+    const localUser = JSON.parse(localStorage.getItem('tugga_user') || 'null');
+    if (localUser && (localUser.uid || localUser.id)) {
+      window.fbOnSnapshot(window.fbDoc(window.fbDB, "users", localUser.uid || localUser.id), function(snap) {
+        clearSyncError("User Document");
         if (snap.exists()) {
           const data = snap.data();
           // If admin suspended this user, log them out immediately
@@ -1312,12 +1557,35 @@
             return;
           }
           walletBalance = data.wallet || 0;
+          
+          // Mutate local storage cached object safely
+          const current = JSON.parse(localStorage.getItem('tugga_user') || '{}');
+          Object.assign(current, data);
+          localStorage.setItem('tugga_user', JSON.stringify(current));
+
+          // Safely update DOM name elements dynamically
+          const displayName = current.name || current.email || "User";
+          if (document.getElementById("userName")) {
+            document.getElementById("userName").textContent = displayName;
+          }
+          if (document.getElementById("greetName")) {
+            document.getElementById("greetName").textContent = displayName.split(" ")[0];
+          }
+          if (document.getElementById("userAvatar")) {
+            document.getElementById("userAvatar").textContent = displayName[0] ? displayName[0].toUpperCase() : "U";
+          }
+
           updateStats();
         }
+      }, function(error) {
+        console.error("User document snapshot error:", error);
+        showSyncError("User Document", error);
       });
     }
+
     // Real-time platform settings (apply company name + support contact)
     window.fbOnSnapshot(window.fbDoc(window.fbDB, "settings", "platform"), function(snap) {
+      clearSyncError("Platform Settings");
       if (snap.exists()) {
         const s = snap.data();
         localStorage.setItem("tugga_settings", JSON.stringify(s));
@@ -1347,6 +1615,9 @@
           waLink.style.display = 'inline';
         }
       }
+    }, function(error) {
+      console.error("Platform settings snapshot error:", error);
+      showSyncError("Platform Settings", error);
     });
   }
   initFirebaseSync();
@@ -3201,6 +3472,154 @@
       if (window.innerWidth <= 768) toggleSidebar();
     });
   });
+
+  /* ── NIN Slip Converter ─────────────────────────────────────────────── */
+  (function () {
+    // Initialise pdf.js worker once the lib is available
+    function initWorker() {
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+    }
+    // Wait for scripts to load (they're loaded async by the browser)
+    if (document.readyState === 'complete') { initWorker(); }
+    else { window.addEventListener('load', initWorker); }
+  })();
+
+  function ninConverterUpdateList(input) {
+    const list = document.getElementById('ninConverterFileList');
+    list.innerHTML = '';
+    if (input.files.length > 0) {
+      list.style.display = 'block';
+      for (let i = 0; i < input.files.length; i++) {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:6px 0;border-bottom:1px solid #e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+        div.textContent = (i + 1) + '. ' + input.files[i].name;
+        if (i === input.files.length - 1) div.style.borderBottom = 'none';
+        list.appendChild(div);
+      }
+    } else {
+      list.style.display = 'none';
+    }
+  }
+
+  function ninConverterClear() {
+    const input = document.getElementById('ninConverterInput');
+    input.value = '';
+    ninConverterUpdateList(input);
+    document.getElementById('ninConverterProgress').style.display = 'none';
+    document.getElementById('ninConverterProgressBar').style.width = '0%';
+  }
+
+  function ninConverterSetProgress(done, total) {
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('ninConverterProgressBar').style.width = pct + '%';
+    document.getElementById('ninConverterProgressPct').textContent = pct + '%';
+    document.getElementById('ninConverterProgressLabel').textContent =
+      'Processing slip ' + done + ' of ' + total + '…';
+  }
+
+  function ninConverterCropWhiteSpace(canvas) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    let top = null, bottom = null, left = null, right = null;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        if (data[i] < 245 || data[i + 1] < 245 || data[i + 2] < 245) {
+          if (top === null) top = y;
+          bottom = y;
+          if (left === null || x < left) left = x;
+          if (right === null || x > right) right = x;
+        }
+      }
+    }
+    if (top === null) return canvas;
+    const cw = right - left;
+    const ch = bottom - top;
+    const out = document.createElement('canvas');
+    out.width = cw;
+    out.height = ch;
+    out.getContext('2d').drawImage(canvas, left, top, cw, ch, 0, 0, cw, ch);
+    return out;
+  }
+
+  async function ninConverterGenerate() {
+    if (!window.pdfjsLib || !window.jspdf) {
+      toast('PDF libraries still loading — please wait a moment and try again.', 'error');
+      return;
+    }
+    const input = document.getElementById('ninConverterInput');
+    if (!input.files.length) {
+      toast('Please select at least one NIN slip PDF.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('ninConverterBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generating…';
+
+    const progressWrap = document.getElementById('ninConverterProgress');
+    progressWrap.style.display = 'block';
+    ninConverterSetProgress(0, input.files.length);
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const pageWidth  = 210;
+      const pageHeight = 297;
+      const gap        = 2;
+      const boxWidth   = (pageWidth  - gap) / 2;
+      const boxHeight  = (pageHeight - gap) / 2;
+
+      for (let i = 0; i < input.files.length; i++) {
+        const buf  = await input.files[i].arrayBuffer();
+        const task = pdfjsLib.getDocument({ data: buf });
+        const doc  = await task.promise;
+        const page = await doc.getPage(1);
+
+        const vp     = page.getViewport({ scale: 3 });
+        const canvas = document.createElement('canvas');
+        canvas.width  = vp.width;
+        canvas.height = vp.height;
+
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+        const cropped = ninConverterCropWhiteSpace(canvas);
+        const imgData = cropped.toDataURL('image/jpeg', 1.0);
+
+        const col = i % 2;
+        const row = Math.floor((i % 4) / 2);
+        const x   = col * (boxWidth  + gap);
+        const y   = row * (boxHeight + gap);
+
+        pdf.addImage(imgData, 'JPEG', x, y, boxWidth, boxHeight);
+
+        if ((i + 1) % 4 === 0 && i !== input.files.length - 1) {
+          pdf.addPage();
+        }
+
+        ninConverterSetProgress(i + 1, input.files.length);
+      }
+
+      pdf.save('NIN_Slips_4perA4.pdf');
+      toast('PDF generated and downloaded!', 'success');
+    } catch (err) {
+      console.error('NIN Slip Converter error:', err);
+      toast('An error occurred while generating the PDF. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate A4 PDF';
+      setTimeout(function () {
+        progressWrap.style.display = 'none';
+        document.getElementById('ninConverterProgressBar').style.width = '0%';
+      }, 2500);
+    }
+  }
 </script>
 
 <!-- Support Contact Bar -->
