@@ -56,6 +56,7 @@
   </aside>
 
   <main class="main">
+    <div id="globalSyncAlert"></div>
 
     <!-- OVERVIEW -->
     <section id="sec-overview" class="content-section">
@@ -243,8 +244,8 @@
               <div>
                 <p style="font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:0.5rem">🪪 Verify with NIN</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.8rem">
-                  <div class="form-group"><label>Normal Slip (₦)</label><input type="number" id="p_nin_normal" value="200"/></div>
-                  <div class="form-group"><label>Verification Info Slip (₦)</label><input type="number" id="p_nin_info" value="250"/></div>
+                  <div class="form-group"><label>Regular Slip (₦)</label><input type="number" id="p_nin_normal" value="200"/></div>
+                  <div class="form-group"><label>Basic Slip (₦)</label><input type="number" id="p_nin_info" value="250"/></div>
                   <div class="form-group"><label>Premium Slip (₦)</label><input type="number" id="p_nin_premium" value="350"/></div>
                   <div class="form-group"><label>Standard Slip (₦)</label><input type="number" id="p_nin_standard" value="200"/></div>
                 </div>
@@ -253,8 +254,8 @@
               <div>
                 <p style="font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:0.5rem">📞 Phone Number Verification</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.8rem">
-                  <div class="form-group"><label>Normal Slip (₦)</label><input type="number" id="p_phone_normal" value="150"/></div>
-                  <div class="form-group"><label>Verification Info Slip (₦)</label><input type="number" id="p_phone_info" value="200"/></div>
+                  <div class="form-group"><label>Regular Slip (₦)</label><input type="number" id="p_phone_normal" value="150"/></div>
+                  <div class="form-group"><label>Basic Slip (₦)</label><input type="number" id="p_phone_info" value="200"/></div>
                   <div class="form-group"><label>Premium Slip (₦)</label><input type="number" id="p_phone_premium" value="300"/></div>
                   <div class="form-group"><label>Standard Slip (₦)</label><input type="number" id="p_phone_standard" value="150"/></div>
                 </div>
@@ -263,8 +264,8 @@
               <div>
                 <p style="font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:0.5rem">🧬 Bio Data Verification</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.8rem">
-                  <div class="form-group"><label>Normal Slip (₦)</label><input type="number" id="p_bio_normal" value="300"/></div>
-                  <div class="form-group"><label>Verification Info Slip (₦)</label><input type="number" id="p_bio_info" value="350"/></div>
+                  <div class="form-group"><label>Regular Slip (₦)</label><input type="number" id="p_bio_normal" value="300"/></div>
+                  <div class="form-group"><label>Basic Slip (₦)</label><input type="number" id="p_bio_info" value="350"/></div>
                   <div class="form-group"><label>Premium Slip (₦)</label><input type="number" id="p_bio_premium" value="450"/></div>
                   <div class="form-group"><label>Standard Slip (₦)</label><input type="number" id="p_bio_standard" value="300"/></div>
                 </div>
@@ -273,8 +274,8 @@
               <div>
                 <p style="font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:0.5rem">👆 FingerPrint Verification</p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.8rem">
-                  <div class="form-group"><label>Normal Slip (₦)</label><input type="number" id="p_fp_normal" value="200"/></div>
-                  <div class="form-group"><label>Verification Info Slip (₦)</label><input type="number" id="p_fp_info" value="250"/></div>
+                  <div class="form-group"><label>Regular Slip (₦)</label><input type="number" id="p_fp_normal" value="200"/></div>
+                  <div class="form-group"><label>Basic Slip (₦)</label><input type="number" id="p_fp_info" value="250"/></div>
                   <div class="form-group"><label>Premium Slip (₦)</label><input type="number" id="p_fp_premium" value="350"/></div>
                   <div class="form-group"><label>Standard Slip (₦)</label><input type="number" id="p_fp_standard" value="200"/></div>
                 </div>
@@ -646,24 +647,81 @@
 </div>
 
 <script src="../js/app.js?v=8"></script>
-<script type="module" src="../js/firebase.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, onSnapshot,
+  collection, addDoc, getDocs, query, where, updateDoc, increment, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDX31m2k1OOzedDQHAbpvgP15mxLjBRdwc",
+  authDomain: "tugga-nin.firebaseapp.com",
+  projectId: "tugga-nin",
+  storageBucket: "tugga-nin.firebasestorage.app",
+  messagingSenderId: "63922868228",
+  appId: "1:63922868228:web:45bfadf123e9b493b82551"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+window.fbAuth = auth;
+window.fbDB = db;
+window.fbStorage = storage;
+window.fbStorageRef = ref;
+window.fbUploadBytes = uploadBytes;
+window.fbGetDownloadURL = getDownloadURL;
+window.fbDoc = doc;
+window.fbSetDoc = setDoc;
+window.fbGetDoc = getDoc;
+window.fbOnSnapshot = onSnapshot;
+window.fbCollection = collection;
+window.fbAddDoc = addDoc;
+window.fbGetDocs = getDocs;
+window.fbQuery = query;
+window.fbWhere = where;
+window.fbUpdateDoc = updateDoc;
+window.fbIncrement = increment;
+window.fbDeleteDoc = deleteDoc;
+window.fbCreateUser = createUserWithEmailAndPassword;
+window.fbSignIn = signInWithEmailAndPassword;
+window.fbSignOut = signOut;
+window.fbOnAuthStateChanged = onAuthStateChanged;
+window.fbResetPassword = sendPasswordResetEmail;
+window.fbReady = true;
+
+console.log("✅ Firebase ready (inline)");
+</script>
 <script>
-  const admin = requireAuth("admin");
+  const localStorage = window.safeStorage || window.localStorage;
+  let admin = requireAuth("admin");
   if (admin) document.getElementById("adminName").textContent = admin.name;
 
   const MOCK_USERS = [
     { id: 1, name: "John Doe", email: "user@tugga.com", role: "user", wallet: 5000, status: "Active" }
   ];
+  window._fbUsers = JSON.parse(localStorage.getItem("tugga_users") || "null");
 
   // Resolve UID to email for display
   function resolveUser(userId) {
     if (!userId) return '—';
+    const userIdStr = String(userId);
     // If it already looks like an email, return as-is
-    if (userId.includes('@')) return userId;
+    if (userIdStr.includes('@')) return userIdStr;
     // Look up in _fbUsers by uid or id
     const users = window._fbUsers || [];
-    const u = users.find(x => (x.uid || x.id) === userId);
-    return u ? u.email : userId;
+    const u = users.find(x => String(x.uid || x.id) === userIdStr);
+    return u ? u.email : userIdStr;
   }
 
   function loadOverview() {
@@ -1696,13 +1754,95 @@
   });
 
   // ── Firebase real-time sync (admin) ───────────────
+  function showSyncError(component, error) {
+    const container = document.getElementById("globalSyncAlert");
+    if (container) {
+      let alertEl = document.getElementById("sync-alert-" + component.replace(/\s+/g, ''));
+      if (!alertEl) {
+        alertEl = document.createElement("div");
+        alertEl.id = "sync-alert-" + component.replace(/\s+/g, '');
+        alertEl.className = "alert alert-error";
+        alertEl.style.marginBottom = "1rem";
+        container.appendChild(alertEl);
+      }
+      alertEl.innerHTML = `<strong>⚠️ Firebase Sync Error (${component}):</strong> ${error.message || error} (Code: ${error.code || 'unknown'})`;
+    }
+  }
+
+  function clearSyncError(component) {
+    const alertEl = document.getElementById("sync-alert-" + component.replace(/\s+/g, ''));
+    if (alertEl) {
+      alertEl.remove();
+    }
+  }
+
+  window.addEventListener('error', function(e) {
+    showSyncError("JavaScript Error", e.error || e.message);
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    showSyncError("Unhandled Rejection", e.reason ? (e.reason.message || e.reason) : e);
+  });
+
+  var _fbSyncInitialized = false;
+
   function initAdminFirebaseSync() {
     if (!window.fbReady) { setTimeout(initAdminFirebaseSync, 300); return; }
 
+    window.fbOnAuthStateChanged(window.fbAuth, function(firebaseUser) {
+      if (firebaseUser) {
+        // Fetch user document from Firestore to verify role
+        window.fbGetDoc(window.fbDoc(window.fbDB, "users", firebaseUser.uid)).then(function(snap) {
+          if (snap.exists()) {
+            const userData = snap.data();
+            if (userData.role === 'admin') {
+              // Valid admin! Reconstruct localStorage session
+              admin = Object.assign({}, userData, { uid: firebaseUser.uid });
+              localStorage.setItem('tugga_user', JSON.stringify(admin));
+              document.getElementById("adminName").textContent = userData.name || userData.email || "Admin";
+
+              if (_fbSyncInitialized) return;
+              _fbSyncInitialized = true;
+              startSyncListeners();
+            } else {
+              console.warn("Unauthorized role:", userData.role);
+              window.location.href = "../index.html";
+            }
+          } else {
+            console.warn("User document not found for UID:", firebaseUser.uid);
+            window.location.href = "../index.html";
+          }
+        }).catch(function(err) {
+          console.error("Failed to verify user doc dynamically:", err);
+          // Fallback: If network failed or permission was blocked, but we already have an admin cached, let them stay
+          const localUser = JSON.parse(localStorage.getItem('tugga_user') || 'null');
+          if (localUser && localUser.role === 'admin') {
+            admin = localUser;
+            if (_fbSyncInitialized) return;
+            _fbSyncInitialized = true;
+            startSyncListeners();
+          } else {
+            window.location.href = "../index.html";
+          }
+        });
+      } else {
+        console.warn("No active Firebase Auth session. Redirecting to login...");
+        window.location.href = "../index.html";
+      }
+    });
+  }
+
+  function startSyncListeners() {
     // Real-time transactions
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "transactions"), function(snap) {
-      const txns = snap.docs.map(d => d.data()).sort((a,b) => b.id > a.id ? 1 : -1);
-      localStorage.setItem('tugga_txns', JSON.stringify(txns));
+      clearSyncError("Transactions");
+      const txns = snap.docs.map(d => Object.assign({}, d.data(), { _docId: d.id })).sort(function(a, b) {
+        const idA = String(a.id || '');
+        const idB = String(b.id || '');
+        return idB.localeCompare(idA);
+      });
+       localStorage.setItem('tugga_txns', JSON.stringify(txns.slice(0, 100)));
+
+      // Refresh active section
       const active = document.querySelector('.sidebar a.active');
       if (active) {
         const id = active.getAttribute('data-section');
@@ -1713,18 +1853,29 @@
         if (id === 'sec-overview') loadOverview();
         if (id === 'sec-transactions') loadAllTxns();
       }
+      // Always keep overview stats fresh
+      loadOverview();
+    }, function(error) {
+      console.error("Transactions snapshot error:", error);
+      showSyncError("Transactions", error);
     });
 
     // Real-time users
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "users"), function(snap) {
-      const users = snap.docs.map(d => ({ ...d.data(), uid: d.id }));
+      clearSyncError("Users");
+      const users = snap.docs.map(function(d){ return Object.assign({}, d.data(), { uid: d.id }); });
       window._fbUsers = users;
-      document.getElementById("statUsers").textContent = users.filter(u => u.role !== 'admin').length;
+      localStorage.setItem('tugga_users', JSON.stringify(users.slice(0, 100)));
+      document.getElementById("statUsers").textContent = users.filter(function(u){ return u.role !== 'admin'; }).length;
       loadUsers();
+    }, function(error) {
+      console.error("Users snapshot error:", error);
+      showSyncError("Users", error);
     });
 
     // Real-time VA requests
     window.fbOnSnapshot(window.fbCollection(window.fbDB, "va_requests"), function(snap) {
+      clearSyncError("VA Requests");
       const requests = snap.docs.map(d => ({ ...d.data(), uid: d.id })).filter(r => r.status === 'pending');
       const box = document.getElementById('vaRequestsBox');
       const list = document.getElementById('vaRequestsList');
@@ -1739,10 +1890,14 @@
       } else {
         box.style.display = 'none';
       }
+    }, function(error) {
+      console.error("VA requests snapshot error:", error);
+      showSyncError("VA Requests", error);
     });
 
     // Real-time platform settings
     window.fbOnSnapshot(window.fbDoc(window.fbDB, "settings", "platform"), function(snap) {
+      clearSyncError("Platform Settings");
       if (snap.exists()) {
         const s = snap.data();
         localStorage.setItem("tugga_settings", JSON.stringify(s));
@@ -1752,6 +1907,9 @@
           if (logoEl) logoEl.innerHTML = '🛡️ ' + s.companyName.split(' ')[0] + ' <span>' + (s.companyName.split(' ').slice(1).join(' ') || 'IT SOLUTIONS') + '</span> <span style="font-size:0.7rem;background:var(--accent);padding:2px 8px;border-radius:4px;margin-left:8px">ADMIN</span>';
         }
       }
+    }, function(error) {
+      console.error("Platform settings snapshot error:", error);
+      showSyncError("Platform Settings", error);
     });
   }
   initAdminFirebaseSync();
@@ -1769,7 +1927,7 @@
     history.pushState({ page: 'admin-dashboard' }, '', window.location.href);
   });
 
-  // Initial load
+  // Initial load — render cache immediately
   document.getElementById('usersSearch').value = '';
   loadOverview();
   loadUsers();

@@ -1271,18 +1271,18 @@
       <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem">Select the type of slip you want to print after verification:</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem">
 
-        <!-- Normal Slip -->
-        <div class="slip-choice" onclick="chooseSlip(this,'Normal Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
-          <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem">📄 Normal Slip</div>
-          <img src="../img/normal-slip.png?v=2" style="width:100%;border-radius:6px;display:block" alt="Normal Slip"/>
-          <div id="slipPrice-Normal Slip" style="font-weight:700;color:var(--accent);font-size:0.85rem;margin-top:0.4rem;text-align:center"></div>
+        <!-- Basic Slip (first) -->
+        <div class="slip-choice" onclick="chooseSlip(this,'Basic Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem">🔍 Basic Slip</div>
+          <img src="../img/verification-slip.png?v=3" style="width:100%;border-radius:6px;display:block" alt="Basic Slip"/>
+          <div id="slipPrice-Basic Slip" style="font-weight:700;color:var(--accent);font-size:0.85rem;margin-top:0.4rem;text-align:center"></div>
         </div>
 
-        <!-- Verification Info Slip -->
-        <div class="slip-choice" onclick="chooseSlip(this,'Verification Information Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
-          <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem">🔍 Verification Info Slip</div>
-          <img src="../img/verification-slip.png?v=3" style="width:100%;border-radius:6px;display:block" alt="Verification Info Slip"/>
-          <div id="slipPrice-Verification Information Slip" style="font-weight:700;color:var(--accent);font-size:0.85rem;margin-top:0.4rem;text-align:center"></div>
+        <!-- Regular Slip -->
+        <div class="slip-choice" onclick="chooseSlip(this,'Regular Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
+          <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem">📄 Regular Slip</div>
+          <img src="../img/normal-slip.png?v=2" style="width:100%;border-radius:6px;display:block" alt="Regular Slip"/>
+          <div id="slipPrice-Regular Slip" style="font-weight:700;color:var(--accent);font-size:0.85rem;margin-top:0.4rem;text-align:center"></div>
         </div>
 
         <!-- Premium Slip -->
@@ -2184,7 +2184,7 @@ console.log("✅ Firebase ready (inline)");
 
   function refreshPricing() {
     _p = JSON.parse(localStorage.getItem("tugga_pricing") || "{}");
-    // NIN Verify fees are now per slip type — base fee is the Normal Slip price
+    // NIN Verify fees are now per slip type — base fee is the Regular Slip price
     NIN_VERIFY_SERVICES['verify-nin'].fee   = _p.nin_normal   || 200;
     NIN_VERIFY_SERVICES['phone-verify'].fee = _p.phone_normal || 150;
     NIN_VERIFY_SERVICES['bio-data'].fee     = _p.bio_normal   || 300;
@@ -2223,8 +2223,8 @@ console.log("✅ Firebase ready (inline)");
 
   // Get fee for a specific method + slip combination
   function getNinVerifyFee(serviceKey, slipName) {
-    const slipKey = slipName === 'Normal Slip' ? 'normal'
-      : slipName === 'Verification Information Slip' ? 'info'
+    const slipKey = slipName === 'Regular Slip' ? 'normal'
+      : slipName === 'Basic Slip' ? 'info'
       : slipName === 'Premium Slip' ? 'premium'
       : slipName === 'Standard Slip' ? 'standard' : 'normal';
     const methodKey = serviceKey === 'verify-nin' ? 'nin'
@@ -2375,7 +2375,7 @@ console.log("✅ Firebase ready (inline)");
       });
       _selectedSlip = '';
       document.getElementById('slipChoiceErr').textContent = '';
-      ['Normal Slip','Verification Information Slip','Premium Slip','Standard Slip'].forEach(function(slip) {
+      ['Basic Slip','Regular Slip','Premium Slip','Standard Slip'].forEach(function(slip) {
         var el = document.getElementById('slipPrice-' + slip);
         if (el) el.textContent = fmt(getNinVerifyFee(serviceKey, slip));
       });
@@ -2636,7 +2636,7 @@ console.log("✅ Firebase ready (inline)");
 
     const photoBox = `<div style="width:140px;height:160px;background:#2a3a4a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:5rem;margin:0 auto 1rem;border:2px solid rgba(255,255,255,0.2)">👤</div>`;
 
-    if (slipType === 'Normal Slip' || slipType === 'Verification Information Slip' || slipType === 'Standard Slip') {
+    if (slipType === 'Regular Slip' || slipType === 'Basic Slip' || slipType === 'Standard Slip') {
       return `<!DOCTYPE html><html><head><title>Search Details – ${slipType}</title>
       <style>body{margin:0;background:#1a2535;font-family:Arial,sans-serif;display:flex;justify-content:center;padding:20px}
       .container{background:#1a2535;border-radius:12px;overflow:hidden;width:420px}
