@@ -1269,14 +1269,7 @@
     <!-- STEP 1: Slip Selection -->
     <div id="ninVerifyStep1">
       <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem">Select the type of slip you want to print after verification:</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem">
-
-        <!-- Basic Slip (first) -->
-        <div class="slip-choice" onclick="chooseSlip(this,'Basic Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
-          <div style="font-weight:600;font-size:0.85rem;margin-bottom:0.4rem">🔍 Basic Slip</div>
-          <img src="../img/verification-slip.png?v=3" style="width:100%;border-radius:6px;display:block" alt="Basic Slip"/>
-          <div id="slipPrice-Basic Slip" style="font-weight:700;color:var(--accent);font-size:0.85rem;margin-top:0.4rem;text-align:center"></div>
-        </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;margin-bottom:1rem">
 
         <!-- Regular Slip -->
         <div class="slip-choice" onclick="chooseSlip(this,'Regular Slip')" style="border:2px solid #e2e8f0;border-radius:10px;padding:0.6rem;cursor:pointer;transition:all 0.2s">
@@ -1348,6 +1341,9 @@ import {
 import {
   getStorage, ref, uploadBytes, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+import {
+  getFunctions, httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDX31m2k1OOzedDQHAbpvgP15mxLjBRdwc",
@@ -1369,6 +1365,10 @@ window.fbStorage = storage;
 window.fbStorageRef = ref;
 window.fbUploadBytes = uploadBytes;
 window.fbGetDownloadURL = getDownloadURL;
+// Firebase Cloud Functions
+const functions = getFunctions(app, "us-central1");
+window.fbFunctions = functions;
+window.fbHttpsCallable = httpsCallable;
 window.fbDoc = doc;
 window.fbSetDoc = setDoc;
 window.fbGetDoc = getDoc;
@@ -2375,7 +2375,7 @@ console.log("✅ Firebase ready (inline)");
       });
       _selectedSlip = '';
       document.getElementById('slipChoiceErr').textContent = '';
-      ['Basic Slip','Regular Slip','Premium Slip','Standard Slip'].forEach(function(slip) {
+      ['Regular Slip','Premium Slip','Standard Slip'].forEach(function(slip) {
         var el = document.getElementById('slipPrice-' + slip);
         if (el) el.textContent = fmt(getNinVerifyFee(serviceKey, slip));
       });
@@ -2460,7 +2460,7 @@ console.log("✅ Firebase ready (inline)");
         return;
       }
       document.getElementById('nv_nin_err').textContent = '';
-      inputs = { primary: nin };
+      inputs = { primary: nin, nin };
     } else if (currentNinService === 'phone-verify') {
       const phone = document.getElementById('nv_phone').value.trim();
       if (!isValidNigerianPhone(phone)) {
@@ -2468,7 +2468,7 @@ console.log("✅ Firebase ready (inline)");
         return;
       }
       document.getElementById('nv_phone_err').textContent = '';
-      inputs = { primary: phone };
+      inputs = { primary: phone, phone };
     } else if (currentNinService === 'fingerprint') {
       const finger = document.getElementById('fp_finger').value;
       const file   = document.getElementById('fp_image') ? document.getElementById('fp_image').files[0] : null;
@@ -2503,65 +2503,118 @@ console.log("✅ Firebase ready (inline)");
     syncWalletToFirebase();
     window._lastNinInputs = inputs;
 
-    // Show result
-    const result = ninMockLookup(currentNinService, inputs);
-    const resultEl = document.getElementById('ninVerifyResult');
+    // ── Call Lumiid via Cloud Function ────────────────────────────────────
+    const btn = document.getElementById('ninVerifyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+    alertEl.innerHTML = '<div class="alert" style="background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e">🔄 Contacting identity service…</div>';
 
-    if (currentNinService === 'bio-data') {
-      if (!result.match) {
-        // No match — refund and don't save to history
+    var _callLumiid = function() {
+      if (!window.fbFunctions || !window.fbHttpsCallable) {
         walletBalance += slipFee;
         syncWalletToFirebase();
-        resultEl.innerHTML = '<span class="badge badge-failed">❌ No Match</span> Bio data does not match the NIN record.';
-        resultEl.style.display = 'block';
-        alertEl.innerHTML = '<div class="alert alert-error">No matching record found. Fee refunded.</div>';
+        btn.disabled = false;
+        btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
+        alertEl.innerHTML = '<div class="alert alert-error">Service not ready. Please refresh and try again.</div>';
         return;
       }
-      resultEl.innerHTML = '<span class="badge badge-success">✅ Match</span> Bio data matches the NIN record.';
-    } else {
-      resultEl.innerHTML =
-        '<div style="background:#1a2a3a;border-radius:12px;overflow:hidden;max-width:420px;margin:0 auto">' +
-          '<div style="background:#1a2a3a;padding:1rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)">' +
-            '<p style="color:#fff;font-weight:700;font-size:1rem;margin-bottom:0.8rem">Search Details</p>' +
-            '<div style="width:140px;height:160px;background:#2a3a4a;border-radius:8px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:5rem;border:2px solid rgba(255,255,255,0.2)">' +
-              result.photo +
-            '</div>' +
-          '</div>' +
-          '<table style="width:100%;border-collapse:collapse">' +
-            [
-              ['NIN', result.nin || inputs.primary],
-              ['FIRSTNAME', result.firstname],
-              ['MIDDLENAME', result.middlename || ''],
-              ['SURNAME', result.surname],
-              ['BIRTHDATE', result.birthdate],
-              ['TELEPHONENO', result.telephoneno],
-              ['GENDER', result.gender],
-              ['RESIDENCE_ADDRESS', result.residence_address],
-              ['RESIDENCE_TOWN', result.residence_town],
-              ['RESIDENCE_LGA', result.residence_lga],
-              ['RESIDENCE_STATE', result.residence_state]
-            ].map(([label, value]) =>
-              `<tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
-                <td style="padding:10px 14px;color:rgba(255,255,255,0.6);font-size:0.78rem;font-weight:700;background:#1e2d3d;width:45%">${label}</td>
-                <td style="padding:10px 14px;color:#fff;font-size:0.82rem;background:#1a2535">${value || ''}</td>
-              </tr>`
-            ).join('') +
-          '</table>' +
-          '<div style="padding:1rem;background:#1a2a3a">' +
-            `<button onclick="downloadNINSlip('${_selectedSlip}')" style="width:100%;padding:11px;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#0f2044;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem">⬇ Download ${_selectedSlip}</button>` +
-          '</div>' +
-        '</div>';
-    }
-    resultEl.style.display = 'block';
-    alertEl.innerHTML = '<div class="alert alert-success">' + svc.title + ' completed successfully!</div>';
+      var lumiidNinVerify = window.fbHttpsCallable(window.fbFunctions, 'lumiidNinVerify');
+      lumiidNinVerify({
+        serviceKey: currentNinService,
+        slipType:   _selectedSlip,
+        nin:        inputs.nin    || null,
+        phone:      inputs.phone  || null,
+        fname:      inputs.fname  || null,
+        lname:      inputs.lname  || null,
+        dob:        inputs.dob    || null,
+        gender:     inputs.gender || null,
+      }).then(function(response) {
+        btn.disabled = false;
+        btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
+        var result = response.data;
+        var resultEl = document.getElementById('ninVerifyResult');
 
-    // Generate PDF slip as base64 and save transaction with status 'success'
-    const slipContent = currentNinService === 'bio-data'
-      ? 'Service: ' + svc.title + '\nResult: Match\nSlip: ' + _selectedSlip + '\nDate: ' + new Date().toLocaleString()
-      : 'Service: ' + svc.title + '\nName: ' + result.name + '\nDOB: ' + result.dob + '\nGender: ' + result.gender + '\nSlip: ' + _selectedSlip + '\nDate: ' + new Date().toLocaleString();
-    const slipDataUrl = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(slipContent)));
-    submitWithStatus(svc.title, inputs.primary, slipFee, 'success', { 'Input': inputs.primary, 'Slip Type': _selectedSlip, 'slipUrl': slipDataUrl });
-    updateStats();
+        // Fingerprint submitted for manual review
+        if (result.submitted) {
+          resultEl.innerHTML = '<span class="badge badge-success">✅ Submitted</span> Fingerprint request received. We will process and contact you.';
+          resultEl.style.display = 'block';
+          alertEl.innerHTML = '<div class="alert alert-success">Request submitted successfully!</div>';
+          submitWithStatus(svc.title, inputs.primary, slipFee, 'submitted', { 'Input': inputs.primary, 'Slip Type': _selectedSlip });
+          updateStats();
+          return;
+        }
+
+        // Bio-data no match — refund
+        if (currentNinService === 'bio-data' && result.match === false) {
+          walletBalance += slipFee;
+          syncWalletToFirebase();
+          resultEl.innerHTML = '<span class="badge badge-failed">❌ No Match</span> Bio data does not match the NIN record.';
+          resultEl.style.display = 'block';
+          alertEl.innerHTML = '<div class="alert alert-error">No matching record found. Fee refunded.</div>';
+          return;
+        }
+
+        // Bio-data match
+        if (currentNinService === 'bio-data') {
+          resultEl.innerHTML = '<span class="badge badge-success">✅ Match</span> Bio data matches the NIN record.';
+          resultEl.style.display = 'block';
+          alertEl.innerHTML = '<div class="alert alert-success">' + svc.title + ' completed successfully!</div>';
+          var matchContent = 'Service: ' + svc.title + '\nResult: Match\nSlip: ' + _selectedSlip + '\nDate: ' + new Date().toLocaleString();
+          var matchUrl = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(matchContent)));
+          submitWithStatus(svc.title, inputs.primary, slipFee, 'success', { 'Input': inputs.primary, 'Slip Type': _selectedSlip, 'slipUrl': matchUrl });
+          updateStats();
+          return;
+        }
+
+        // Full record result
+        var rec = result.record || {};
+        window._lastLumiidResult = rec;
+        var photoHTML = rec.photo
+          ? '<img src="' + rec.photo + '" style="width:140px;height:160px;border-radius:8px;object-fit:cover;border:2px solid rgba(255,255,255,0.2)" alt="Photo"/>'
+          : '<div style="width:140px;height:160px;background:#2a3a4a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:5rem;border:2px solid rgba(255,255,255,0.2)">👤</div>';
+        var rows = [
+          ['NIN', rec.nin || inputs.primary],
+          ['FIRSTNAME', rec.firstname], ['MIDDLENAME', rec.middlename || ''],
+          ['SURNAME', rec.surname], ['BIRTHDATE', rec.birthdate],
+          ['TELEPHONENO', rec.telephoneno], ['GENDER', rec.gender],
+          ['RESIDENCE_ADDRESS', rec.residence_address],
+          ['RESIDENCE_TOWN', rec.residence_town],
+          ['RESIDENCE_LGA', rec.residence_lga],
+          ['RESIDENCE_STATE', rec.residence_state]
+        ].map(function(pair) {
+          return '<tr style="border-bottom:1px solid rgba(255,255,255,0.08)">' +
+            '<td style="padding:10px 14px;color:rgba(255,255,255,0.6);font-size:0.78rem;font-weight:700;background:#1e2d3d;width:45%">' + pair[0] + '</td>' +
+            '<td style="padding:10px 14px;color:#fff;font-size:0.82rem;background:#1a2535">' + (pair[1] || '') + '</td></tr>';
+        }).join('');
+        resultEl.innerHTML =
+          '<div style="background:#1a2a3a;border-radius:12px;overflow:hidden;max-width:420px;margin:0 auto">' +
+            '<div style="background:#1a2a3a;padding:1rem;text-align:center;border-bottom:1px solid rgba(255,255,255,0.1)">' +
+              '<p style="color:#fff;font-weight:700;font-size:1rem;margin-bottom:0.8rem">Search Details</p>' +
+              photoHTML +
+            '</div>' +
+            '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+            '<div style="padding:1rem;background:#1a2a3a">' +
+              '<button onclick="downloadNINSlip(\'' + _selectedSlip + '\')" style="width:100%;padding:11px;background:linear-gradient(135deg,#c9a84c,#e8c96a);color:#0f2044;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem">⬇ Download ' + _selectedSlip + '</button>' +
+            '</div>' +
+          '</div>';
+        resultEl.style.display = 'block';
+        alertEl.innerHTML = '<div class="alert alert-success">' + svc.title + ' completed successfully!</div>';
+
+        var recName = (rec.firstname || '') + ' ' + (rec.surname || '');
+        var slipContent = 'Service: ' + svc.title + '\nName: ' + recName + '\nDOB: ' + (rec.birthdate || '') + '\nGender: ' + (rec.gender || '') + '\nSlip: ' + _selectedSlip + '\nDate: ' + new Date().toLocaleString();
+        var slipDataUrl = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(slipContent)));
+        submitWithStatus(svc.title, inputs.primary, slipFee, 'success', { 'Input': inputs.primary, 'Slip Type': _selectedSlip, 'slipUrl': slipDataUrl });
+        updateStats();
+
+      }).catch(function(err) {
+        walletBalance += slipFee;
+        syncWalletToFirebase();
+        btn.disabled = false;
+        btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
+        alertEl.innerHTML = '<div class="alert alert-error">❌ ' + (err.message || 'Verification failed. Please try again.') + '</div>';
+      });
+    };
+    _callLumiid();
   }
 
   let _selectedSlip = '';
@@ -2592,7 +2645,7 @@ console.log("✅ Firebase ready (inline)");
   }
 
   function downloadNINSlip(slipType) {
-    const result = ninMockLookup(currentNinService, window._lastNinInputs || {primary:'N/A'});
+    const result = window._lastLumiidResult || ninMockLookup(currentNinService, window._lastNinInputs || {primary:'N/A'});
     const nin = (window._lastNinInputs && window._lastNinInputs.primary) || 'N/A';
     const slipHTML = generateSlipHTML(slipType, result, nin);
     const win = window.open('', '_blank', 'width=900,height=700');

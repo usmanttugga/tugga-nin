@@ -1,4 +1,8 @@
 {
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -10,7 +14,8 @@
       "package-lock.json",
       "push.bat",
       "404.html",
-      "NIN_Slip_Converter_Windows/**"
+      "NIN_Slip_Converter_Windows/**",
+      "functions/**"
     ],
     "rewrites": [
       {
