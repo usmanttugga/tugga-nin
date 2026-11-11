@@ -122,8 +122,10 @@ app.post("/nin/verify", async (req, res) => {
 
   // Call Lumiid
   let lumiidRes;
+  const lumiidUrl = `${LUMIID_BASE}/${apiPath}`;
+  console.log("Calling Lumiid:", lumiidUrl, "serviceKey:", serviceKey);
   try {
-    lumiidRes = await fetch(`${LUMIID_BASE}/${apiPath}`, {
+    lumiidRes = await fetch(lumiidUrl, {
       method:  "POST",
       headers: {
         "Content-Type": "application/json",
@@ -138,14 +140,23 @@ app.post("/nin/verify", async (req, res) => {
 
   // Parse response
   let apiJson;
+  let rawText = '';
   try {
-    apiJson = await lumiidRes.json();
+    rawText = await lumiidRes.text();
+    apiJson = JSON.parse(rawText);
   } catch {
-    return res.status(502).json({ ok: false, message: "Invalid response from identity service." });
+    console.error("Lumiid non-JSON response, status:", lumiidRes.status, "body:", rawText.slice(0, 500));
+    return res.status(502).json({
+      ok: false,
+      message: "Identity service returned an unexpected response (status " + lumiidRes.status + "). Please check the API endpoint or contact support.",
+      debug_status: lumiidRes.status,
+      debug_body: rawText.slice(0, 200)
+    });
   }
 
   if (!lumiidRes.ok) {
     const msg = apiJson?.message || apiJson?.error || "Verification failed.";
+    console.warn(`Lumiid error [${lumiidRes.status}]:`, JSON.stringify(apiJson).slice(0, 300));
     if (lumiidRes.status === 404) {
       return res.status(404).json({ ok: false, message: "NIN record not found." });
     }
@@ -167,6 +178,7 @@ app.post("/nin/verify", async (req, res) => {
   // Return normalized record
   const record = normalize(apiJson);
   record.nin = record.nin || nin || phone || "";
+  console.log("Lumiid success, raw keys:", Object.keys(apiJson?.data || apiJson).join(", "));
   return res.json({ ok: true, record, slipType });
 });
 
