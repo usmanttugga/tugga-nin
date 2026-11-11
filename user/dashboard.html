@@ -2509,29 +2509,35 @@ console.log("✅ Firebase ready (inline)");
     btn.textContent = 'Verifying…';
     alertEl.innerHTML = '<div class="alert" style="background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e">🔄 Contacting identity service…</div>';
 
+    // ── NIN_PROXY_URL is set once here; update after Render deploy ───────────
+    var PROXY_URL = 'https://tugga-nin-proxy.onrender.com/nin/verify';
+
     var _callLumiid = function() {
-      if (!window.fbFunctions || !window.fbHttpsCallable) {
-        walletBalance += slipFee;
-        syncWalletToFirebase();
+      fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceKey: currentNinService,
+          slipType:   _selectedSlip,
+          nin:        inputs.nin    || null,
+          phone:      inputs.phone  || null,
+          fname:      inputs.fname  || null,
+          lname:      inputs.lname  || null,
+          dob:        inputs.dob    || null,
+          gender:     inputs.gender || null
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(result) {
         btn.disabled = false;
         btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
-        alertEl.innerHTML = '<div class="alert alert-error">Service not ready. Please refresh and try again.</div>';
-        return;
-      }
-      var lumiidNinVerify = window.fbHttpsCallable(window.fbFunctions, 'lumiidNinVerify');
-      lumiidNinVerify({
-        serviceKey: currentNinService,
-        slipType:   _selectedSlip,
-        nin:        inputs.nin    || null,
-        phone:      inputs.phone  || null,
-        fname:      inputs.fname  || null,
-        lname:      inputs.lname  || null,
-        dob:        inputs.dob    || null,
-        gender:     inputs.gender || null,
-      }).then(function(response) {
-        btn.disabled = false;
-        btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
-        var result = response.data;
+        // Proxy returned a business-level error
+        if (!result.ok) {
+          walletBalance += slipFee;
+          syncWalletToFirebase();
+          alertEl.innerHTML = '<div class="alert alert-error">❌ ' + (result.message || 'Verification failed. Please try again.') + '</div>';
+          return;
+        }
         var resultEl = document.getElementById('ninVerifyResult');
 
         // Fingerprint submitted for manual review

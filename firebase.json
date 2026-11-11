@@ -15,7 +15,8 @@
       "push.bat",
       "404.html",
       "NIN_Slip_Converter_Windows/**",
-      "functions/**"
+      "functions/**",
+      "proxy/**"
     ],
     "rewrites": [
       {
