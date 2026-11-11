@@ -22,24 +22,8 @@ const PORT = process.env.PORT || 3000;
 const LUMIID_API_KEY = process.env.LUMIID_API_KEY;
 const LUMIID_BASE    = "https://api.lumiid.com/v1";
 
-// ── Allowed origins — only your live domains ─────────────────────────────────
-const ALLOWED_ORIGINS = [
-  "https://majiadigital.com.ng",
-  "https://www.majiadigital.com.ng",
-  "https://tugga-nin.web.app",
-  "https://tugga-nin.firebaseapp.com"
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (Render health checks, curl tests)
-    if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error("CORS: origin not allowed — " + origin));
-  },
-  methods: ["POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
-}));
+// ── CORS — open to all origins (tighten after confirming live) ───────────────
+app.use(cors());
 
 app.use(express.json());
 

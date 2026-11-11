@@ -2612,12 +2612,13 @@ console.log("✅ Firebase ready (inline)");
         submitWithStatus(svc.title, inputs.primary, slipFee, 'success', { 'Input': inputs.primary, 'Slip Type': _selectedSlip, 'slipUrl': slipDataUrl });
         updateStats();
 
-      }).catch(function(err) {
+      .catch(function(err) {
         walletBalance += slipFee;
         syncWalletToFirebase();
         btn.disabled = false;
         btn.textContent = currentNinService === 'fingerprint' ? 'Submit Request' : 'Verify NIN';
-        alertEl.innerHTML = '<div class="alert alert-error">❌ ' + (err.message || 'Verification failed. Please try again.') + '</div>';
+        console.error('NIN proxy error:', err);
+        alertEl.innerHTML = '<div class="alert alert-error">❌ ' + (err.message || 'Network error. Please check your connection and try again.') + '</div>';
       });
     };
     _callLumiid();
