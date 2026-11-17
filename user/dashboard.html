@@ -1506,11 +1506,14 @@ console.log("✅ Firebase ready (inline)");
       clearSyncError("Pricing");
       if (snap.exists()) {
         localStorage.setItem('tugga_pricing', JSON.stringify(snap.data()));
-        refreshPricing();
       }
+      // Always call refreshPricing — if doc doesn't exist yet, hardcoded defaults render
+      refreshPricing();
     }, function(error) {
       console.error("Pricing snapshot error:", error);
       showSyncError("Pricing", error);
+      // Still render default prices even if Firestore read fails
+      refreshPricing();
     });
 
     // Availability real-time
