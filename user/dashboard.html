@@ -2174,7 +2174,7 @@ console.log("✅ Firebase ready (inline)");
   }
 
   // ── NIN Verification Sub-Services ─────────────────
-  let _p = JSON.parse(localStorage.getItem("tugga_pricing") || "{}");
+  var _p = JSON.parse(localStorage.getItem("tugga_pricing") || "{}");
 
   const NIN_VERIFY_SERVICES = {
     'verify-nin':   { title: 'Verify with NIN',           fee: 200, icon: '🪪', desc: 'Enter an 11-digit NIN to retrieve identity details.' },
@@ -2615,6 +2615,7 @@ console.log("✅ Firebase ready (inline)");
         submitWithStatus(svc.title, inputs.primary, slipFee, 'success', { 'Input': inputs.primary, 'Slip Type': _selectedSlip, 'slipUrl': slipDataUrl });
         updateStats();
 
+      })
       .catch(function(err) {
         walletBalance += slipFee;
         syncWalletToFirebase();
